@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 # Este archivo proporciona modelos paramétricos para
 # las eficiencias de la bomba y el compresor, y para la caída de presión
 # en la bomba. Estas funciones reemplazan la necesidad de extraer datos
-# de las complejas figuras 3D del paper de Park & Ahn (2020),
-# asegurando la reproducibilidad y claridad del modelo.
 # ===============================================================
 
 # --- Parámetros y Suposiciones de los Componentes ---

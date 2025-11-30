@@ -17,7 +17,6 @@ import os
 MPH_TO_MPS = 0.44704  # 1 milla por hora = 0.44704 metros por segundo
 
 # Parámetros del Vehículo (valores típicos para un sedán eléctrico)
-# Estos deben ser citados en tu tesis como suposiciones del modelo.
 M_VEHICLE = 1900.0     # Masa del vehículo [kg]
 G_ACCEL = 9.81         # Aceleración de la gravedad [m/s^2]
 C_RR = 0.02            # Coeficiente de resistencia a la rodadura (adimensional)
@@ -28,7 +27,6 @@ DRIVETRAIN_EFF = 0.80  # Eficiencia del tren motriz (motor + transmisión)
 REGEN_EFF = 0.65       # Eficiencia del frenado regenerativo
 
 # Rutas de los archivos
-# Asegúrate de que esta ruta apunte a tu archivo .txt
 input_file_path = r'C:\Users\super\Desktop\Supernatural\TESIS\thermal-management\UDDS.txt' 
 # Dónde guardar el archivo .npy procesado
 output_file_path = r'C:\Users\super\Desktop\Vasudeva\Manifold\engineering\predictive-control\stochastic-mpc\driving_energy.npy'
@@ -74,8 +72,6 @@ def calculate_driving_power(v, a):
 # --- 3. PROCESAMIENTO DEL ARCHIVO DEL CICLO DE CONDUCCIÓN ---
 
 try:
-    # Usamos pandas para leer el archivo. sep='\s+' maneja múltiples espacios o tabs.
-    # skiprows=1 para saltar la línea del encabezado.
     df = pd.read_csv(input_file_path, sep='\s+', skiprows=1, names=['time_s', 'speed_mph'])
 except FileNotFoundError:
     print(f"Error: No se encontró el archivo del ciclo de conducción en {input_file_path}")
@@ -84,8 +80,6 @@ except FileNotFoundError:
 # Conversión de unidades
 df['speed_mps'] = df['speed_mph'] * MPH_TO_MPS
 
-# Cálculo de la aceleración
-# dt es la diferencia de tiempo entre filas (generalmente 1s)
 dt = df['time_s'].diff().iloc[1] 
 df['accel_mps2'] = df['speed_mps'].diff() / dt
 # Rellenar el primer valor NaN con 0

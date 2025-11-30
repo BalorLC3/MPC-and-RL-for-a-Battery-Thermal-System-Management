@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 #
 # Propósito: Leer el archivo CSV original, limpiarlo, procesarlo y
 # guardar los arrays limpios de SOC y dV/dT en un archivo .npz.
-# Este script se ejecuta UNA SOLA VEZ.
 # ===============================================================
 
 # --- 1. CONFIGURACIÓN ---
