@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-def compute_markov_chain(driving_data, n_bins=15):
+def compute_markov_chain(disturbance, n_bins=15):
     """
     Computes the transition probability matrix for Driving Power.
     Uses Quantile-based binning (Unequally spaced).
@@ -11,14 +11,14 @@ def compute_markov_chain(driving_data, n_bins=15):
     # 1. Discretization (Unequally Spaced)
     # We use percentiles to define bin edges so each bin has roughly equal data initially
     # And add 0 and max to ensure coverage.
-    bin_edges = np.unique(np.percentile(driving_data, np.linspace(0, 100, n_bins + 1)))
+    bin_edges = np.unique(np.percentile(disturbance, np.linspace(0, 100, n_bins + 1)))
     
     # This is the value the MPC will "see"
     bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
     
     # 2. Assign Data to Bins
     # indices will be from 1 to n_bins (np.digitize convention)
-    indices = np.digitize(driving_data, bin_edges) - 1
+    indices = np.digitize(disturbance, bin_edges) - 1
     
     # Clip to ensure valid indices [0, n_bins-1]
     n_real_bins = len(bin_centers)
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         t = np.linspace(0, 1000, 10000)
         data = np.abs(np.sin(t/50)) * 20000 + np.random.normal(0, 1000, 10000)
     # Compute
-    N_BINS = 15
+    N_BINS = 20
     trans_matrix, centers, edges = compute_markov_chain(data, N_BINS)
     
     print(trans_matrix, trans_matrix.shape)

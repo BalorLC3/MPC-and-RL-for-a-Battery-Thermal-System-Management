@@ -9,8 +9,6 @@ class BaseController(ABC):
     def compute_control(self, state, disturbance):
         pass
 
-import numpy as np
-
 class Thermostat(BaseController):
     '''Rule based controller; threshold based'''
     def __init__(self):
@@ -31,9 +29,18 @@ class Thermostat(BaseController):
         
         return w_comp, w_pump
     
-class Constraints():
-    def __init__(self):
-        self.p = 0
         
-class SMPC():
-    pass
+class SMPC(BaseController):
+    def __init__(self):
+        self.n_constraints = 5
+        T_mins = np.array([30, 28]) # T_batt, T_clnt
+        T_maxs = np.array([35, 34])
+        w_mins = np.array([0, 0])   # w_comp, w_pump
+        w_maxs = np.array([5000, 6000])
+        P_batt_min  = np.array([0])
+        P_batt_max  = np.array([200])
+    
+    def optimize(self, state, disturbance, transition_matrix):
+        N = len(disturbance)
+        T = ca.MX.sym('T', 2)
+        W = ca.MX.sym('W', 2)

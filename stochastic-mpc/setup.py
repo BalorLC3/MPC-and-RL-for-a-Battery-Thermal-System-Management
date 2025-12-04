@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
+import time
 
 @dataclass
 class SimConfiguration:
@@ -20,6 +21,7 @@ def run_simulation(system, controller, config: SimConfiguration):
     results_list = []
 
     print(f"Simulation {type(controller).__name__}")
+    start = time.time()
     for i, t in enumerate(time_steps):
         idx = min(i, len(config.driving_data)-1)
         current_p_driv = config.driving_data[idx]
@@ -41,8 +43,11 @@ def run_simulation(system, controller, config: SimConfiguration):
             **diagnostics 
         }
         results_list.append(record)
+        if i % 500 == 0:
+            print(f"....Step {i}")
 
-    print(f"Simulation finished")
+    print(f"....Simulation finished")
+    print(f"Done {type(controller).__name__} in {time.time()-start:.2f}s")
 
     results_df = pd.DataFrame(results_list)
     return results_df
