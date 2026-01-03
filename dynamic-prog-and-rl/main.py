@@ -9,6 +9,7 @@ from controllers.dynamic_programming import run_dp_offline, make_dp_controller_f
 from controllers.thermostat import thermostat_logic_jax
 from utils.setup import run_simulation
 from utils.plot_funs import plot_results
+import pickle
 
 def show_results(
         controller_name,
@@ -54,16 +55,17 @@ if __name__ == "__main__":
     # ===============================================================
     # CONTROLLER 
     # ===============================================================
-    controller_name = "thermostat"
-    T_des = 33
+    controller_name = "ppo"
 
     if controller_name == "dp":
-        policy_cube = run_dp_offline(dist, params, alpha=0.05, T_des=T_des)
+        policy_cube = run_dp_offline(dist, params, alpha=0.05)
         controller_func = make_dp_controller_fn(policy_cube)
     elif controller_name == "thermostat":
         controller_func = thermostat_logic_jax
+    elif controller_name == "ppo":
+        ...
     # ===============================================================
-    # SHARED FUNS (initial state and always must yield history)
+    # SHARED FUNCTIONALITIES (initial state and always must yield history)
     # ===============================================================
     init_state = jnp.array([30.0, 30.0, 0.8])
     history = run_simulation(init_state, controller_func, dist, params, 1.0)
