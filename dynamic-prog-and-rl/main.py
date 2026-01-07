@@ -24,9 +24,9 @@ def inference_fn(state, carry, k, params):
     obs = get_obs(state, d_curr)
     
     mean = actor.apply(params_nn, obs)
-    action = jnp.tanh(mean)
+    action = jnp.tanh(mean) # [-1, 1]
     
-    controls = (action + 1.0) * 5000.0
+    controls = (action + 1.0) * 5000.0 # [0, 10_000]
     
     return controls, carry
 

@@ -70,7 +70,7 @@ class DetailedMetricsCallback(BaseCallback):
             # Print status every episode because we have so few of them
             ep_num = len(self.history['ep_rewards'])
             print(f"  > Ep {ep_num}: Energy={self.history['ep_energy_kj'][-1]:.1f}kJ, "
-                  f"MaxT={self.cur_temp_max:.1f}C, Rew={self.cur_reward:.1f}")
+                  f"AvgT={self.cur_temp_sum / self.cur_steps:.1f}C, Reward={self.cur_reward:.1f}")
 
             # Reset
             self.cur_reward = 0
@@ -129,8 +129,8 @@ class TrainExport:
         axs[0].plot(episodes, history['ep_energy_kj'], color='dodgerblue')
         axs[0].set_ylabel('Energia'+ '\n' + r'Consumida [kJ]')
 
-        axs[1].plot(episodes, history['ep_max_temp'], color='red')
-        axs[1].set_ylabel(r'Max $T_{batt}$ [°C]')
+        axs[1].plot(episodes, history['ep_avg_temp'], color='red')
+        axs[1].set_ylabel(r'Promedio $T_{batt}$ [°C]')
 
         axs[2].plot(episodes, history['ep_rewards'], color='seagreen')
         axs[2].set_ylabel('Recompensa'+ '\n' + r'Cumulativa ($R$)')

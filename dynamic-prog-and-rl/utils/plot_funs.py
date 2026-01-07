@@ -14,7 +14,7 @@ plt.rcParams.update({
     "axes.spines.right": True,
     "axes.spines.left": True,
     "axes.spines.bottom": True,
-    "figure.figsize": (6.0, 10.0),
+    "figure.figsize": (4.0, 10.0), # TO paste in the Thesis is okay to use (4.0, 10.0), but (6.0, 10.0) is better for normal visualizaton
     "lines.linewidth": 1.4,
     "axes.grid": True,
     "grid.alpha": 0.25,
@@ -62,8 +62,8 @@ def plot_results(df_controller, name='thermostat', dt=1.0, ): # Added dt argumen
     axs[2].set_ylim(0, 10000)
     
     # --- 4. Temperatures ---
-    axs[3].plot(time, T_batt, 'r', label='Battery ($T_{batt}$)')
-    axs[3].plot(time, T_clnt, 'b--', label='Coolant ($T_{clnt}$)')
+    axs[3].plot(time, T_batt, 'r', label='Bateria ($T_{batt}$)')
+    axs[3].plot(time, T_clnt, 'b--', label='Refrigerante ($T_{clnt}$)')
     axs[3].set_ylabel(r'Temperatura' + '\n' + r'($T$) [$^\circ$C]')
     axs[3].legend(loc='upper left', frameon=True) 
     axs[3].set_xlim(0, len(time))
@@ -107,7 +107,7 @@ def show_results(
     })
     
     print(f"Total Energy: {(df['P_cooling'].sum()/1000):.4f} kJ")
-    print(f"Final T_batt: \n{df[['time','T_batt']].tail(3)}K")
+    print(f"Final T_batt: \n{df[['time','T_batt']].tail(3)}")
     
     plot_results(df, controller_name)
 

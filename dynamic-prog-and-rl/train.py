@@ -1,8 +1,6 @@
 from src.env_batt import BatteryCoolingEnv
-from sbx import SAC, TQC
+from sbx import SAC
 from utils.trainer import TrainExport
-from stable_baselines3.sac.policies import SACPolicy
-
 import os 
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
@@ -12,12 +10,15 @@ env = BatteryCoolingEnv()
 name = "sac"
 model = SAC(
         env=env, 
-        gamma=0.99,
+        gamma=0.995,
         learning_rate=3e-4,
         policy= "MlpPolicy",
         buffer_size=100_000, # Large buffer for slow dynamics
-        learning_starts=1_000, # Learning starts after 1000 iterations of the system dynamics
-        tau=0.005
+        learning_starts=2_740, # Learning starts after 1000 iterations of the system dynamics
+        ent_coef=0.1,
+        tau=0.005,
+        verbose=1,
+        seed=17
 )
 
 # Reward Function:
@@ -32,4 +33,4 @@ trainer = TrainExport(
 
 trainer.train(total_timesteps=50_000)
 
-# WINNER: lambda = 20.0, beta = 200.0, alpha = 0.02
+# log: 
