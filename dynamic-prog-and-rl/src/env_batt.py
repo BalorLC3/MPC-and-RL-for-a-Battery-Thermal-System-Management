@@ -10,6 +10,9 @@ from dataclasses import dataclass, field
 
 @dataclass
 class ObservationConfig:
+    horizon: int = field(
+        default_factory=lambda: 5
+    )
     obs_mean: jnp.ndarray = field(
         default_factory=lambda: jnp.array([32.0, 32.0, 0.5, 10000.0, 25.0])
     )
@@ -30,20 +33,21 @@ class BatteryCoolingEnv(gym.Env):
             raw = np.load("data/driving_energy.npy", mmap_mode="r")
             self.driving_data = jnp.array(raw)
         except Exception:
-            t = jnp.arange(0, 3600)
-            self.driving_data = jnp.abs(jnp.sin(t / 50.0)) * 20000.0
+            time = jnp.arange(0, 3600)
+            self.driving_data = jnp.abs(jnp.sin(time / 50.0)) * 20000.0
 
         self.params = SystemParameters()
         self.obs_config = ObservationConfig()
         self.dt = 1.0
         self.N_data = len(self.driving_data)
+        self.horizon = self.obs_config.horizon
 
         self.action_space = spaces.Box(
             low=0.0, high=10_000.0, shape=(2,), dtype=np.float32
         )
 
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(5 + self.horizon,), dtype=np.float32
         )
 
         # Close over params + dt to avoid recompilation
@@ -52,7 +56,7 @@ class BatteryCoolingEnv(gym.Env):
         )
 
         self.state = None
-        self.k = 0
+        self.t = 0
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -62,36 +66,51 @@ class BatteryCoolingEnv(gym.Env):
         base_temp = rng.uniform(29.0, 34.0)
         self.state = jnp.array([base_temp, base_temp, 0.8])
 
-        self.k = rng.integers(0, self.N_data - 2000)
+        self.t = rng.integers(0, self.N_data - 2000)
 
-        d = self._get_disturbance(self.k)
-        obs = self._get_obs(self.state, d)
+        d = self._get_disturbance(self.t)
+        preview = self._get_receding_horizon(self.t)
+        obs = self._get_obs(self.state, d, preview)
         return obs, {}
 
     def step(self, action):
-        d = self._get_disturbance(self.k)
+        d = self._get_disturbance(self.t)
 
         next_state, reward, terminated, info = self._jit_step(
             self.state, jnp.array(action), d
         )
 
         self.state = next_state
-        self.k += 1
+        self.t += 1
 
-        truncated = self.k >= self.N_data - 1
+        truncated = self.t >= self.N_data - 1
 
-        d_next = self._get_disturbance(self.k)
+        d_next = self._get_disturbance(self.t)
+        preview = self._get_receding_horizon(self.t)
         # Observation for next step
-        obs = self._get_obs(next_state, d_next)
+        obs = self._get_obs(next_state, d_next, preview)
 
         return obs, reward, terminated, truncated, info
+
+    def _get_receding_horizon(self, t):
+        idxs = jnp.arange(t + 1, t + self.horizon + 1)
+        idxs = jnp.clip(idxs, 0, self.N_data - 1)
+        return self.driving_data[idxs]
 
     def _get_disturbance(self, k):
         return jnp.array([self.driving_data[k], 40.0])
 
-    def _get_obs(self, state, disturbance):
-        raw = jnp.concatenate([state, disturbance])
-        return (raw - self.obs_config.obs_mean) / self.obs_config.obs_scale
+    def _get_obs(self, state, disturbance, preview):
+        raw = jnp.concatenate([state, disturbance, preview])
+        mean = jnp.concatenate([
+            self.obs_config.obs_mean,
+            jnp.full((self.horizon,), 10000.0)
+        ])
+        scale = jnp.concatenate([
+            self.obs_config.obs_scale,
+            jnp.full((self.horizon,), 10000.0)
+        ])
+        return (raw - mean) / scale
 
     @staticmethod
     @jax.jit
@@ -130,6 +149,3 @@ class BatteryCoolingEnv(gym.Env):
             "P_cooling": diag[0],
             "T_batt": T_next,
         }
-
-# log: lambda = 20, alpha = 0.05, beta = 200.0, got 271kJ and 33.9C
-# log: lambda = 30, alpha = 0.05, beta = 200.0, got 275kJ and 33.87C

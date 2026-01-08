@@ -1,5 +1,6 @@
 # All time modules
 import numpy as np
+import jax
 import jax.numpy as jnp
 # Own modules
 from system.sys_dynamics_jax import SystemParameters
@@ -13,20 +14,37 @@ import pickle
 
 # Mean: [T_b, T_c, SOC, P_driv, T_amb]
 obs_config = ObservationConfig()
-    
-def get_obs(state, disturbance):
-    raw = jnp.concatenate([state, disturbance])
-    return (raw - obs_config.obs_mean) / obs_config.obs_scale
+
+def get_obs(state, disturbance, preview):
+    raw = jnp.concatenate([state, disturbance, preview])
+
+    mean = jnp.concatenate([
+        obs_config.obs_mean,
+        jnp.full((obs_config.horizon,), 10000.0)
+    ])
+    scale = jnp.concatenate([
+        obs_config.obs_scale,
+        jnp.full((obs_config.horizon,), 10000.0)
+    ])
+    return (raw - mean) / scale
 
 def inference_fn(state, carry, k, params):
     """Model - free, it does not interact with the parameters of the system but with the actions"""
     d_curr = dist[k]
-    obs = get_obs(state, d_curr)
+    
+    start_indices = (k + 1, 0)
+    slice_sizes = (obs_config.horizon, 1)
+
+    preview_slice = jax.lax.dynamic_slice(dist, start_indices, slice_sizes)
+
+    preview = preview_slice.reshape(-1)
+
+    obs = get_obs(state, d_curr, preview)
     
     mean = actor.apply(params_nn, obs)
     action = jnp.tanh(mean) # [-1, 1]
     
-    controls = (action + 1.0) * 5000.0 # [0, 10_000]
+    controls = (action + 1.0) * 5000.0 # [0, 10_000]ssss
     
     return controls, carry
 
@@ -48,23 +66,16 @@ if __name__ == "__main__":
     # ===============================================================
     # CONTROLLER 
     # ===============================================================
-    controller_name = "sac"
+    controller_name = "sac_horizon"
 
     if controller_name == "dp":
         policy_cube = run_dp_offline(dist, params, alpha=100.0)
         controller_func = make_dp_controller_fn(policy_cube)
     elif controller_name == "thermostat":
         controller_func = thermostat_logic_jax
-    elif controller_name == "sac":
+    elif controller_name == "sac" or "sac_horizon":
             print("Executing learned model SAC:", controller_name)
             with open(f'results/{controller_name}_actor_weights.pkl', 'rb') as f:
-                params_nn = pickle.load(f)
-                
-            actor = SBXActor(n_actions=2)
-            
-            controller_func = inference_fn
-    elif controller_name == "tqc":
-            with open('results/tqc_actor_weights.pkl', 'rb') as f:
                 params_nn = pickle.load(f)
                 
             actor = SBXActor(n_actions=2)

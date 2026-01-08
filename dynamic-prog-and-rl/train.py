@@ -7,6 +7,7 @@ os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 
 env = BatteryCoolingEnv()
 
+# using this model horizon must be 0 in env_batt
 name = "sac"
 model = SAC(
         env=env, 
