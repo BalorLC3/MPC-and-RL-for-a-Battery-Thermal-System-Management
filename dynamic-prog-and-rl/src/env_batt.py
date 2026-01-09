@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 @dataclass
 class ObservationConfig:
     horizon: int = field(
-        default_factory=lambda: 5
+        default_factory=lambda: 20
     )
     obs_mean: jnp.ndarray = field(
         default_factory=lambda: jnp.array([32.0, 32.0, 0.5, 10000.0, 25.0])
@@ -26,7 +26,7 @@ class BatteryCoolingEnv(gym.Env):
     Standard Gymnasium Environment for Stable Baselines3.
     """
 
-    def __init__(self, render_mode=None):
+    def __init__(self, render_mode=None, def_horizon=0):
         super().__init__()
 
         try:
@@ -35,12 +35,14 @@ class BatteryCoolingEnv(gym.Env):
         except Exception:
             time = jnp.arange(0, 3600)
             self.driving_data = jnp.abs(jnp.sin(time / 50.0)) * 20000.0
-
+        self.def_horizon = def_horizon
         self.params = SystemParameters()
-        self.obs_config = ObservationConfig()
+        self.obs_config = ObservationConfig(horizon=self.def_horizon)
         self.dt = 1.0
         self.N_data = len(self.driving_data)
         self.horizon = self.obs_config.horizon
+        print(f"Training with l-step lookahead, l = {self.horizon}")
+
 
         self.action_space = spaces.Box(
             low=0.0, high=10_000.0, shape=(2,), dtype=np.float32
@@ -63,7 +65,7 @@ class BatteryCoolingEnv(gym.Env):
 
         rng = self.np_random
 
-        base_temp = rng.uniform(29.0, 34.0)
+        base_temp = rng.uniform(30, 33)
         self.state = jnp.array([base_temp, base_temp, 0.8])
 
         self.t = rng.integers(0, self.N_data - 2000)
@@ -77,7 +79,7 @@ class BatteryCoolingEnv(gym.Env):
         d = self._get_disturbance(self.t)
 
         next_state, reward, terminated, info = self._jit_step(
-            self.state, jnp.array(action), d
+            self.state, jnp.array(action), d,
         )
 
         self.state = next_state
@@ -121,9 +123,11 @@ class BatteryCoolingEnv(gym.Env):
         next_state, diag = rk4_step(state, controls, disturbance, params, dt)
         T_next = next_state[0]
 
+        MAX_TEMP_DEVIATION = 15.0 
+        MAX_POWER = 50.0
+
         # --- Reward ---
-        lamb = 200.0
-        cost_energy = diag[0] / 1000.0 * lamb # P_cool in kJ
+        cost_energy = (diag[0] / 1000.0) / MAX_POWER  # P_cool in kWh
 
         # Penalty weight
         T_des = 33.0
@@ -133,19 +137,33 @@ class BatteryCoolingEnv(gym.Env):
         viol_up = jnp.maximum(0.0, T_next - T_MAX)
         viol_low = jnp.maximum(0.0, T_MIN - T_next)
 
-        beta = 200.0
-        cost_constraint = beta * viol_up + viol_low 
+        cost_constraint = (viol_up + viol_low) / MAX_TEMP_DEVIATION
 
-        alpha = 8.0
-        cost_des = alpha * (T_next - T_des) ** 2
+        T_des = 33.0
+        
+        # Only apply this cost at the very last step
+        cost_temp_deviation = ((T_next - T_des) / MAX_TEMP_DEVIATION)**2
+        w_energy = 20.0
+        w_temp = 3.0 # Or 3.0 for less importance 
+        w_constraint = 2.0
 
-        reward = -(cost_constraint + cost_energy + cost_des)
+        total_cost = (
+            w_energy * cost_energy + 
+            w_temp * cost_temp_deviation + 
+            w_constraint * cost_constraint
+        )
+        reward = -total_cost
+
         # Check fail state
         terminated = (T_next > 45.0) | (T_next < 15.0)
-        reward = jnp.where(terminated, reward - 20000.0, reward)
+
+
 
         return next_state, reward, terminated, {
             "time": dt,
             "P_cooling": diag[0],
             "T_batt": T_next,
+            "cost_energy": cost_energy,
+            "cost_temp": cost_temp_deviation,
+            "cost_constraint": cost_constraint,
         }

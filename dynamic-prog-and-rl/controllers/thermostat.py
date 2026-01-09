@@ -20,8 +20,8 @@ def thermostat_logic_jax(state, prev_carry, k, params):
     cooling_state_prev = prev_carry 
     
     # 2. Thresholds
-    T_upper = 34.0
-    T_lower = 32.5
+    T_upper = 33.5
+    T_lower = 32.0
     
     # 3. Hysteresis Logic
     should_turn_on = T_batt >= T_upper
@@ -32,8 +32,8 @@ def thermostat_logic_jax(state, prev_carry, k, params):
                          jnp.where(should_turn_off, 0.0, cooling_state_prev))
     
     # 4. Actuation
-    w_comp = 3000.0 * cooling_state_next
-    w_pump = 2000.0 * cooling_state_next
+    w_comp = 4000.0 * cooling_state_next
+    w_pump = 3000.0 * cooling_state_next
     
     # 5. Return
     return jnp.array([w_comp, w_pump]), cooling_state_next

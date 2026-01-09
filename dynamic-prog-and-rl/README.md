@@ -12,3 +12,8 @@ This folder contains multiple `.py` files that I used for a Stochastic MPC (SMPC
 - `battery_models.py` - Battery thermo-electrical models
 - `entropy.py` - (reversible) Battery entropic heat data generation yields a `.npz` file
 - `driving_energy.py` - Energy used for a cycling driving data (i.e., UDDS), yields a `.npz` file
+
+# Results
+labels = ['DP', 'SMPC', 'DMPC', 'SAC', 'Termostato','l-SAC'] 
+energy_consumption = [150, 178, 190, 280, 338, 379]       # kJ
+time_computation = ['NC', ..., ..., 2.8e-5, 1e-5, 2.8e-5] # Seconds

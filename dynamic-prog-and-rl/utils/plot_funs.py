@@ -105,15 +105,38 @@ def show_results(
         'Q_gen':     diag_hist[:, 4],
         'Q_cool':    diag_hist[:, 5]
     })
-    
     print(f"Total Energy: {(df['P_cooling'].sum()/1000):.4f} kJ")
     print(f"Final T_batt: \n{df[['time','T_batt']].tail(3)}")
     
     plot_results(df, controller_name)
 
-def plot_times():
-    """Generic function to plot computation times from a CSV log file."""
-    ...
+def plot_learning_history(history):
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 5), sharex=True)
+    episodes = np.arange(len(history['ep_rewards']))
+
+    fig, ax = plt.subplot(figsize=(5, 6))
+    ax1.plot(episodes, history['ep_energy_kj'], color='dodgerblue')
+    ax1.set_ylabel('Energia'+ '\n' + r'Consumida [kJ]')
+
+    ax2.plot(episodes, history['ep_avg_temp'], color='red')
+    ax2.set_ylabel(r'Promedio $T_{batt}$ [°C]')
+
+    ax.plot(episodes, history['ep_rewards'], color='seagreen')
+    ax.set_ylabel('Recompensa'+ '\n' + r'Cumulativa ($R$)')
+    ax.set_xlabel('Episodio')
+    ax.ticklabel_format(axis='y')
+
+
+def plot_times_consumption(
+        time_computation: list, 
+        energy_consumption: list, 
+        label: list
+    ):
+    plt.figure(figsize=(6, 4))
+    # Figure to show final consumption
+    plt.bar()
+
+    # Figure to show time to control
 
 
         

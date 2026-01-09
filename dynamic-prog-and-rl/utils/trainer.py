@@ -32,7 +32,11 @@ class DetailedMetricsCallback(BaseCallback):
             'ep_energy_kj': [], # The real KPI
             'ep_avg_temp': [],
             'ep_max_temp': [],
-            'ep_length': []
+            'ep_length': [],
+            'ep_cost_total': [],
+            'ep_cost_energy': [],
+            'ep_cost_temp': [],
+            'ep_cost_constraint': []
         }
         
         # Accumulators for current episode
@@ -41,6 +45,11 @@ class DetailedMetricsCallback(BaseCallback):
         self.cur_temp_sum = 0
         self.cur_temp_max = -np.inf
         self.cur_steps = 0
+
+        self.cur_total_cost_sum = 0
+        self.cur_cost_energy_sum = 0
+        self.cur_cost_temp_sum = 0
+        self.cur_cost_constraint_sum = 0
 
     def _on_step(self) -> bool:
         info = self.locals['infos'][0]
@@ -59,6 +68,15 @@ class DetailedMetricsCallback(BaseCallback):
         self.cur_temp_sum += t_batt
         self.cur_temp_max = max(self.cur_temp_max, t_batt)
 
+        
+        cost_energy = info.get('cost_energy', 0)
+        cost_temp = info.get('cost_temp')
+        cost_constraint = info.get('cost_constraint', 0)
+
+        self.cur_cost_energy_sum += cost_energy
+        self.cur_cost_temp_sum += cost_temp
+        self.cur_cost_constraint_sum += cost_constraint
+
         if done:
             # Store Metrics
             self.history['ep_rewards'].append(self.cur_reward)
@@ -71,6 +89,8 @@ class DetailedMetricsCallback(BaseCallback):
             ep_num = len(self.history['ep_rewards'])
             print(f"  > Ep {ep_num}: Energy={self.history['ep_energy_kj'][-1]:.1f}kJ, "
                   f"AvgT={self.cur_temp_sum / self.cur_steps:.1f}C, Reward={self.cur_reward:.1f}")
+            
+            print(f"   | AvgCostEnergy = {self.cur_cost_energy_sum / self.cur_steps:.4f}, AvgCostTemp = {self.cur_cost_temp_sum / self.cur_steps:.4f}, AvgCostConstraint = {self.cur_cost_constraint_sum / self.cur_steps:.4f}")
 
             # Reset
             self.cur_reward = 0
@@ -79,6 +99,11 @@ class DetailedMetricsCallback(BaseCallback):
             self.cur_temp_max = -np.inf
             self.cur_steps = 0
             
+
+            self.cur_total_cost_sum = 0
+            self.cur_cost_energy_sum = 0
+            self.cur_cost_temp_sum = 0
+            self.cur_cost_constraint_sum = 0
         return True
 
 class TrainExport:
@@ -88,7 +113,7 @@ class TrainExport:
         self.path_prefix = path_prefix
         os.makedirs(os.path.dirname(path_prefix) if os.path.dirname(path_prefix) else '.', exist_ok=True)
 
-    def train(self, total_timesteps: int):
+    def train(self, total_timesteps: int, **kwargs):
         print(f"Starting Training ({total_timesteps} steps)...")
         
         # Use the Detailed Callback
@@ -97,7 +122,8 @@ class TrainExport:
         self.model.learn(
             total_timesteps=total_timesteps, 
             progress_bar=True, 
-            callback=callback
+            callback=callback,
+            **kwargs
         )
         
         self._save_artifacts(callback)
@@ -134,7 +160,7 @@ class TrainExport:
 
         axs[2].plot(episodes, history['ep_rewards'], color='seagreen')
         axs[2].set_ylabel('Recompensa'+ '\n' + r'Cumulativa ($R$)')
-        axs[2].set_xlabel('Episode')
+        axs[2].set_xlabel('Episodio')
         axs[2].ticklabel_format(axis='y', style='sci', scilimits=(4,4))
         
         

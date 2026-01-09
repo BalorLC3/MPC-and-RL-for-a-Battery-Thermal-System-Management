@@ -3,6 +3,24 @@ import jax
 import jax.numpy as jnp
 from functools import partial
 from system.jax_ode_solver import rk4_step
+import numpy as np
+
+def load_driving_cycle(path="data/driving_energy.npy", fallback_len=600):
+    try:
+        raw = np.load(path, mmap_mode="r")
+        print("Driving cycle loaded.")
+        data = jnp.array(raw)
+    except Exception:
+        print("Driving cycle failed, using fallback.")
+        data = jnp.abs(jnp.sin(jnp.arange(fallback_len) / 50.0)) * 20000.0
+
+    N = len(data)
+    dist = jnp.hstack([
+        data.reshape(-1, 1),
+        jnp.full((N, 1), 40.0),
+    ])
+    return dist
+
 
 @partial(jax.jit, static_argnames=['dt', 'controller'])
 def run_simulation(init_state_vec, controller, disturbances_array, params, dt):
@@ -40,3 +58,4 @@ def run_simulation(init_state_vec, controller, disturbances_array, params, dt):
     _, history = jax.lax.scan(step_fn, init_carry, scan_inputs)
     
     return history
+
