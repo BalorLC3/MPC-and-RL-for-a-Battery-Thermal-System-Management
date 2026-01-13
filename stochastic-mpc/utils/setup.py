@@ -46,7 +46,7 @@ def run_simulation(system: Any, controller: Any, config: SimConfiguration, verbo
             **diagnostics 
         }
         results_list.append(record)
-        if verbose is not 0:
+        if verbose != 0:
             np.set_printoptions(precision=2)
             print_log = verbose * 100
             if (i % print_log) == 0:

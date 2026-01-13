@@ -1,12 +1,10 @@
 import casadi as ca
 import numpy as np
-
-# Importamos el solver RK4 de CasADi que creamos en el paso anterior
 from system.casadi_ode_solver import rk4_step_ca
 
 class SystemParameters:
     def __init__(self):
-        # --- Termodinámica ---
+        # --- Thermodynamics ---
         self.rho_rfg = 27.8
         self.rho_clnt = 1069.5
         self.C_rfg = 1117.0
