@@ -1,44 +1,11 @@
 import casadi as ca
 import numpy as np
-from abc import ABC, abstractmethod
-from casadi_ode_solver import rk4_step_ca
-from sys_dynamics_casadi import SystemParameters
+from system.casadi_ode_solver import rk4_step_ca
+from system.sys_dynamics_casadi import SystemParameters
 from collections import deque
-from markov_chain import train_smart_markov
-
-class BaseController(ABC):
-    @abstractmethod
-    def compute_control(self, state, disturbance, velocity=0.0):
-        pass
-
-class Thermostat(BaseController):
-    '''Rule based controller; threshold based'''
-    def __init__(self):
-        self.cooling_active = False
-
-    def compute_control(self, state, disturbance, velocity=0.0):
-        T_batt, _, _ = state
-        T_upper, T_lower = 34.0, 32.5
-        
-        # Optimización: Lógica nativa de Python para simulación numérica
-        if isinstance(T_batt, (float, np.floating, int)):
-            if T_batt > T_upper:
-                self.cooling_active = True
-            elif T_batt < T_lower:
-                self.cooling_active = False
-            w_pump = 2000.0 if self.cooling_active else 0.0
-            w_comp = 3000.0 if self.cooling_active else 0.0
-        else:
-            # Lógica CasADi para generación del grafo
-            self.cooling_active = ca.if_else(
-                T_batt > T_upper,
-                True,
-                ca.if_else(T_batt < T_lower, False, self.cooling_active)
-            )
-            w_pump = ca.if_else(self.cooling_active, 2000.0, 0.0)
-            w_comp = ca.if_else(self.cooling_active, 3000.0, 0.0)
-        return w_comp, w_pump
-
+from controllers.markov_chain import train_smart_markov
+from controllers.base import BaseController
+import time
     # minimize
     # J = \mathbb{E}_{P_driv} \left[\sum_{k=0}^{N_p-1} P_{comp}(k) + P_{pump}(k) + \alpha(T_{batt}(N_p) - T_{batt,des})^2 \right]
     # subject to
@@ -48,8 +15,9 @@ class Thermostat(BaseController):
     # w_{pump,min} \le w_{pump}(k) \le w_{pump,max}
     # P_{batt,min} \le P_{batt}(k) \le P_{batt,max}
 
+
 class DMPC(BaseController):
-    def __init__(self, dt=1.0, T_des=32.5, horizon=20, alpha=1.0, avg_window=15):
+    def __init__(self, dt=1.0, T_des=33.0, horizon=20, alpha=1.0, avg_window=15):
         """
         Deterministic MPC with Recursive Moving Average Filter.
         Predicts future power is constant = average of last 'n' seconds.
@@ -68,20 +36,19 @@ class DMPC(BaseController):
         # Dimensions
         self.n_x = 3 * (self.N + 1)
         self.n_u = 2 * self.N
-        self.n_slack = 2 * (self.N + 1)
 
         # Constraints
-        self.T_mins = np.array([30.0, 28.0]) 
-        self.T_maxs = np.array([35.0, 34.0])
+        self.T_mins = np.array([15.0, 15.0]) 
+        self.T_maxs = np.array([45.0, 45.0])
         self.w_mins = np.array([0.0, 0.0])   
         self.w_maxs = np.array([10000.0, 10000.0])
-        self.P_batt_min = -200.0
-        self.P_batt_max = 200.0 
+
+        self.P_batt_min = -200
+        self.P_batt_max = 200
 
         # Parameters
         self.alpha = alpha
         self.T_des = T_des
-        self.rho_soft = 0.2 # Low penalty for fairness
 
         # Build Solver
         print("Compiling DMPC Solver...")
@@ -90,7 +57,6 @@ class DMPC(BaseController):
 
         self.x_guess = np.zeros(self.n_x)
         self.u_guess = np.zeros(self.n_u)
-        self.slack_guess = np.zeros(self.n_slack)
 
     def _build_solver(self):
         X = ca.MX.sym('X', 3, self.N + 1) 
@@ -98,7 +64,6 @@ class DMPC(BaseController):
         S = ca.MX.sym('S', 2, self.N + 1) 
         P_x0 = ca.MX.sym('P_x0', 3)       
         P_dist = ca.MX.sym('P_dist', 2, self.N) 
-        
         obj = 0
         g = []
         lbg = []
@@ -112,22 +77,17 @@ class DMPC(BaseController):
             x_next, diag = rk4_step_ca(X[:, k], U[:, k], P_dist[:, k], self.params, self.dt)
             g.append(x_next - X[:, k+1])
             lbg.append(zeros_3); ubg.append(zeros_3)
+            P_cool_kW = diag[0] / 1000 / 3600
+            P_batt_W = diag[1] / 1000
             
-            P_batt_kW = diag[1] / 1000.0
-            P_comp_kW = diag[7] / 1000.0
             
             # Energy Cost
-            obj += (P_batt_kW + P_comp_kW) * (self.dt / 3600.0)
-            # Slack Cost
-            obj += self.rho_soft * (S[0, k]**2 + S[1, k]**2)
-            
+            obj += 3.0 * (P_cool_kW * self.dt)
+
             # Hard Power
-            g.append(P_batt_kW); lbg.append([self.P_batt_min]); ubg.append([self.P_batt_max])
-            
-            # Soft Temp (Upper)
-            g.append(X[0, k] - S[0, k]); ubg.append([self.T_maxs[0]]); lbg.append([-ca.inf])
-            # Soft Temp (Lower)
-            g.append(X[0, k] + S[1, k]); lbg.append([self.T_mins[0]]); ubg.append([ca.inf])
+            g.append(P_batt_W); lbg.append([self.P_batt_min]); ubg.append([self.P_batt_max])
+            # Hard Temp
+            g.append(X[0, k]); lbg.append([self.T_mins[0]]); ubg.append([self.T_maxs[0]])
 
         obj += self.alpha * (X[0, self.N] - self.T_des)**2
         
@@ -136,20 +96,20 @@ class DMPC(BaseController):
         ubx_X = np.tile([ca.inf, ca.inf, ca.inf], self.N + 1)
         lbx_U = np.tile(self.w_mins, self.N)
         ubx_U = np.tile(self.w_maxs, self.N)
-        lbx_S = np.zeros(self.n_slack); ubx_S = np.full(self.n_slack, ca.inf)
         
-        self.lbx = np.concatenate([lbx_X, lbx_U, lbx_S])
-        self.ubx = np.concatenate([ubx_X, ubx_U, ubx_S])
+        self.lbx = np.concatenate([lbx_X, lbx_U])
+        self.ubx = np.concatenate([ubx_X, ubx_U])
         self.lbg = np.concatenate(lbg); self.ubg = np.concatenate(ubg)
 
-        OPT_vars = ca.vertcat(ca.vec(X), ca.vec(U), ca.vec(S))
+        OPT_vars = ca.vertcat(ca.vec(X), ca.vec(U))
         OPT_params = ca.vertcat(P_x0, ca.vec(P_dist))
         nlp = {'f': obj, 'x': OPT_vars, 'g': ca.vertcat(*g), 'p': OPT_params}
         opts = {
-            'ipopt.print_level': 0, 
+            'ipopt.print_level': 0, # Change from 0 or 1 to 5 for maximum detail
             'print_time': 0, 
             'ipopt.tol': 1e-4, 
             'expand': True,
+            'ipopt.bound_mult_init_method': 'mu-based'
         }
         self.solver = ca.nlpsol('NMPC', 'ipopt', nlp, opts)
 
@@ -177,34 +137,43 @@ class DMPC(BaseController):
         d_flat = d_horizon.flatten(order='F')
         
         p_val = np.concatenate([state, d_flat])
-        x0_val = np.concatenate([self.x_guess, self.u_guess, self.slack_guess])
+        x0_val = np.concatenate([self.x_guess, self.u_guess])
         
-        try:
-            res = self.solver(x0=x0_val, p=p_val, lbx=self.lbx, ubx=self.ubx, lbg=self.lbg, ubg=self.ubg)
-            opt_var = res['x'].full().flatten()
-            u_opt = opt_var[self.n_x : self.n_x + 2]
-            
-            # Warm Start
-            idx_u = self.n_x; idx_s = self.n_x + self.n_u
-            x_traj = opt_var[:idx_u].reshape(3, self.N+1)
-            u_traj = opt_var[idx_u:idx_s].reshape(2, self.N)
-            s_traj = opt_var[idx_s:].reshape(2, self.N+1)
-            
-            self.x_guess = np.hstack([x_traj[:, 1:], x_traj[:, -1:]]).flatten()
-            self.u_guess = np.hstack([u_traj[:, 1:], u_traj[:, -1:]]).flatten()
-            self.slack_guess = np.hstack([s_traj[:, 1:], s_traj[:, -1:]]).flatten()
-            
-            self.current_step_idx += 1
-            return u_opt
-            
-        except Exception as e:
-            # Fallback
-            self.x_guess = np.zeros(self.n_x)
-            return np.array([5000.0, 5000.0])
+        res = self.solver(x0=x0_val, p=p_val, lbx=self.lbx, ubx=self.ubx, lbg=self.lbg, ubg=self.ubg)            # Robust extraction
+        stats = self.solver.stats()
+
+        x_opt = None
+        if 'x' in res:
+            x_opt = res['x'].full().flatten()
+
+        if stats['success'] or x_opt is not None:
+            if not stats['success']:
+                print(f"Warning: {type(self).__name__} using suboptimal solution at step {self.current_step_idx}")
+                print("return_status:", stats.get('return_status', 'unknown'))
+
+            n_x_vars = self.n_x
+            n_u_vars = self.n_u
+
+            x_traj = x_opt[0:n_x_vars].reshape((3, self.N + 1), order='F')
+            u_traj = x_opt[n_x_vars:n_x_vars + n_u_vars].reshape((2, self.N), order='F')
+
+            # Shift warm start
+            self.x_guess = np.hstack([x_traj[:, 1:], x_traj[:, -1:]]).flatten(order='F')
+            self.u_guess = np.hstack([u_traj[:, 1:], u_traj[:, -1:]]).flatten(order='F')
+
+            u_opt = u_traj[:, 0]
+
+        else:
+            print(f"ERROR: {type(self).__name__} no primal solution at step {self.current_step_idx}")
+            u_opt = self.u_guess[:2] if self.u_guess.size >= 2 else np.array([5000.0, 5000.0])
+
+
+        self.current_step_idx += 1 
+        return u_opt
 
 
 class SMPC(BaseController):
-    def __init__(self, driving_power, driving_velocity, dt=1.0, T_des=32.5, horizon=20, alpha=1.0, n_clusters=15):
+    def __init__(self, driving_power, driving_velocity, dt=1.0, T_des=33.0, horizon=20, alpha=1.0, n_clusters=15):
         """
         SMPC (Expected Value).
         Uses Contextual Markov Chain (Velocity/Accel aware) to predict Expected Power. Note: Normally SMPC is classified in three, we
@@ -217,8 +186,10 @@ class SMPC(BaseController):
         self.n_clusters = n_clusters
         
         print(f"Training Smart Markov ({n_clusters} clusters)...")
+        start = time.time()
         self.centers, self.matrices = train_smart_markov(driving_power, driving_velocity, dt, n_clusters)
-        print("Done.")
+        train_time = time.time() - start 
+        print(f"Total training time: {train_time:.3f} s")
         
         self.current_step_idx = 0
         self.prev_velocity = 0.0 
@@ -226,21 +197,19 @@ class SMPC(BaseController):
         # Dimensions
         self.n_x = 3 * (self.N + 1)
         self.n_u = 2 * self.N
-        self.n_slack = 2 * (self.N + 1)
 
         # Constraints
-        self.T_mins = np.array([30.0, 28.0]) 
-        self.T_maxs = np.array([35.0, 34.0])
+        self.T_mins = np.array([15.0, 15.0]) 
+        self.T_maxs = np.array([45.0, 45.0])
         self.w_mins = np.array([0.0, 0.0])   
         self.w_maxs = np.array([10000.0, 10000.0])
-        self.P_batt_min = -200.0
-        self.P_batt_max = 200.0 
-        
+
+        self.P_batt_min = -200
+        self.P_batt_max = 200
+
         self.alpha = alpha
         self.T_des = T_des
         
-        # Equal to DMPC for fair comparison
-        self.rho_soft = 0.2 
 
         print("Compiling SMPC Solver...")
         self._build_solver()
@@ -248,7 +217,6 @@ class SMPC(BaseController):
 
         self.x_guess = np.zeros(self.n_x)
         self.u_guess = np.zeros(self.n_u)
-        self.slack_guess = np.zeros(self.n_slack)
 
     def _build_solver(self):
         X = ca.MX.sym('X', 3, self.N + 1) 
@@ -271,53 +239,44 @@ class SMPC(BaseController):
             x_next, diag = rk4_step_ca(X[:, k], U[:, k], P_dist_expected[:, k], self.params, self.dt)
             g.append(x_next - X[:, k+1])
             lbg.append(zeros_3); ubg.append(zeros_3)
-            
-            P_batt_kW = diag[1] / 1000.0
-            P_comp_kW = diag[7] / 1000.0
-            
+
+            P_cool_kW = diag[0] / 1000 / 3600
+            P_batt_kW = diag[1] / 1000 
             # Expected Cost
-            obj += (P_batt_kW + P_comp_kW) * (self.dt / 3600.0)
-            obj += self.rho_soft * (S[0, k]**2 + S[1, k]**2)
+            obj += 2.0 * (P_cool_kW * self.dt)
             
             # Constraints (Applied on Expected Trajectory)
+            # Hard temp
             g.append(P_batt_kW); lbg.append([self.P_batt_min]); ubg.append([self.P_batt_max])
-            
-            g.append(X[0, k] - S[0, k]); ubg.append([self.T_maxs[0]]); lbg.append([-np.inf])
-            g.append(X[0, k] + S[1, k]); lbg.append([self.T_mins[0]]); ubg.append([np.inf])
+            g.append(X[0, k]); lbg.append([self.T_mins[0]]); ubg.append([self.T_maxs[0]])
 
         obj += self.alpha * (X[0, self.N] - self.T_des)**2
         
         # --- SAFETY BOX BOUNDS ---
         # Temp: -10 to 80 (Physics break down outside this)
         x_min_safe = [-10.0, -10.0, -10.0]
-        x_max_safe = [80.0, 80.0, 10.0]
+        x_max_safe = [80.0, 80.0, 80.0]
         lbx_X = np.tile(x_min_safe, self.N + 1)
         ubx_X = np.tile(x_max_safe, self.N + 1)
         
         lbx_U = np.tile(self.w_mins, self.N)
         ubx_U = np.tile(self.w_maxs, self.N)
         
-        # Bound the Slack to reasonable values (e.g., max 5 deg violation)
-        # If Inf, solver exploits low rho to generate NaNs.
-        lbx_S = np.zeros(self.n_slack)
-        ubx_S = np.full(self.n_slack, 5.0) 
-        
-        self.lbx = np.concatenate([lbx_X, lbx_U, lbx_S])
-        self.ubx = np.concatenate([ubx_X, ubx_U, ubx_S])
+        self.lbx = np.concatenate([lbx_X, lbx_U])
+        self.ubx = np.concatenate([ubx_X, ubx_U])
         self.lbg = np.concatenate(lbg); self.ubg = np.concatenate(ubg)
 
-        OPT_vars = ca.vertcat(ca.vec(X), ca.vec(U), ca.vec(S))
+        OPT_vars = ca.vertcat(ca.vec(X), ca.vec(U))
         OPT_params = ca.vertcat(P_x0, ca.vec(P_dist_expected))
         
         nlp = {'f': obj, 'x': OPT_vars, 'g': ca.vertcat(*g), 'p': OPT_params}
         opts = {
-            'ipopt.print_level': 0, 
+            'ipopt.print_level': 0, # Change from 0 or 1 to 5 for maximum detail
             'print_time': 0, 
             'ipopt.tol': 1e-4, 
             'expand': True,
-            'ipopt.bound_mult_init_method': 'mu-based' # Stability fix
+            'ipopt.bound_mult_init_method': 'mu-based'
         }
-        # opts = {'ipopt.print_level': 0, 'print_time': 0, 'ipopt.tol': 1e-4, 'expand': True}
         self.solver = ca.nlpsol('ExpectedSMPC', 'ipopt', nlp, opts)
 
     def compute_control(self, state, current_disturbance, velocity=0.0):
@@ -355,34 +314,45 @@ class SMPC(BaseController):
         # 4. Solve
         p_inputs_horizon = np.vstack([expected_power, t_amb_horizon])
         p_flat = p_inputs_horizon.flatten(order='F')
-        
+
         p_val = np.concatenate([state, p_flat])
-        x0_val = np.concatenate([self.x_guess, self.u_guess, self.slack_guess])
+        x0_val = np.concatenate([self.x_guess, self.u_guess])
         
         try:
             res = self.solver(x0=x0_val, p=p_val, lbx=self.lbx, ubx=self.ubx, lbg=self.lbg, ubg=self.ubg)
-            
-            # Robust extraction
-            if not self.solver.stats()['success']:
-                # Optimization failed partially, but result might be usable.
-                # Reset warm start to prevent error propagation.
-                self.x_guess = np.zeros(self.n_x)
-            else:
-                opt_var = res['x'].full().flatten()
-                idx_u = self.n_x; idx_s = self.n_x + self.n_u
-                
-                # Update Warm Start
-                x_traj = opt_var[:idx_u].reshape(3, self.N+1)
-                u_traj = opt_var[idx_u:idx_s].reshape(2, self.N)
-                s_traj = opt_var[idx_s:].reshape(2, self.N+1)
-                
-                self.x_guess = np.hstack([x_traj[:,1:], x_traj[:,-1:]]).flatten()
-                self.u_guess = np.hstack([u_traj[:,1:], u_traj[:,-1:]]).flatten()
-                self.slack_guess = np.hstack([s_traj[:,1:], s_traj[:,-1:]]).flatten()
+            stats = self.solver.stats()
 
-            return res['x'].full().flatten()[self.n_x : self.n_x + 2]
+            x_opt = None
+            if 'x' in res:
+                x_opt = res['x'].full().flatten()
+
+            if stats['success'] or x_opt is not None:
+                if not stats['success']:
+                    print(f"Warning: {type(self).__name__} using suboptimal solution at step {self.current_step_idx}")
+                    print("return_status:", stats.get('return_status', 'unknown'))
+
+                n_x_vars = self.n_x
+                n_u_vars = self.n_u
+
+                x_traj = x_opt[0:n_x_vars].reshape((3, self.N + 1), order='F')
+                u_traj = x_opt[n_x_vars:n_x_vars + n_u_vars].reshape((2, self.N), order='F')
+
+                self.x_guess = np.hstack([x_traj[:, 1:], x_traj[:, -1:]]).flatten(order='F')
+                self.u_guess = np.hstack([u_traj[:, 1:], u_traj[:, -1:]]).flatten(order='F')
+
+                u_opt = u_traj[:, 0]
+
+            else:
+                print(f"ERROR: {type(self).__name__} no primal solution at step {self.current_step_idx}")
+                u_opt = self.u_guess[:2] if self.u_guess.size >= 2 else np.array([5000.0, 5000.0])
+
             
-        except Exception:
+        except Exception as e:
+            print(f"ERROR: {type(self).__name__} solver CRASHED at step {self.current_step_idx} with error: {e}")
+            # Fallback
             self.x_guess = np.zeros(self.n_x)
-            self.current_step_idx += 1
-            return np.array([5000.0, 5000.0])
+            self.u_guess = np.zeros(self.n_u)
+            u_opt = np.array([5000.0, 5000.0])
+
+        self.current_step_idx += 1 
+        return u_opt

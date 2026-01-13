@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 import time
+from typing import Any
 
 @dataclass
 class SimConfiguration:
@@ -16,12 +17,12 @@ class SimConfiguration:
         if self.total_time is None:
             self.total_time = len(self.driving_data)
 
-def run_simulation(system, controller, config: SimConfiguration):
+def run_simulation(system: Any, controller: Any, config: SimConfiguration, verbose: int=0):
     '''Simulation loop that works with any controller that has a .compute_control() method'''
     time_steps = np.arange(0, config.total_time, config.dt)
     results_list = []
 
-    print(f"Simulation {type(controller).__name__}")
+    print(f"- Simulation {type(controller).__name__}")
     start = time.time()
     for i, t in enumerate(time_steps):
         idx = min(i, len(config.driving_data)-1)
@@ -45,11 +46,21 @@ def run_simulation(system, controller, config: SimConfiguration):
             **diagnostics 
         }
         results_list.append(record)
-        if i % 500 == 0:
-            print(f"....Step {i}")
+        if verbose is not 0:
+            np.set_printoptions(precision=2)
+            print_log = verbose * 100
+            if (i % print_log) == 0:
+                print(f"    > Step {i}, P_cool = {diagnostics['P_cooling'] / 1000:.5f} kJ, Tbatt = {system.state[0]:.2f} °C, w = {controls} rpm --- DEBUG: P_driv = {current_p_driv / 1000 :.2f} kJ")
 
-    print(f"....Simulation finished")
-    print(f"Done {type(controller).__name__} in {time.time()-start:.2f}s")
+    print(f"    Simulation finished")
+    sim_time = time.time()-start
+    print(
+        f"[{type(controller).__name__}] "
+        f"Total simulation time: {sim_time:.3f} s | "
+        f"Average time per step (dt = {config.dt} s): {sim_time/len(config.driving_data):.6f} s"
+    )
+
 
     results_df = pd.DataFrame(results_list)
     return results_df
+

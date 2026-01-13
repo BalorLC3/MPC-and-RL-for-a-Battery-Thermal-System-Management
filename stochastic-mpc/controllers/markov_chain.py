@@ -121,9 +121,6 @@ def train_smart_markov(
     return centers, matrices
 
 
-# ---------------------------
-# Plotting (unchanged, uses full matrices for calculations)
-# ---------------------------
 def plot_markov_matrices(matrices, centers, prob_mask_threshold=0.001):
     """
     Plot the 4 context-specific matrices in a 2x2 3D grid.
@@ -183,9 +180,6 @@ def plot_markov_matrices(matrices, centers, prob_mask_threshold=0.001):
     plt.show()
 
 
-# ---------------------------
-# Diagnostics helpers
-# ---------------------------
 def context_trace(velocity, dt=1.0, accel_window=5, acc_thresh=0.5, brake_thresh=-0.5):
     accel = np.diff(velocity, prepend=velocity[0]) / dt
     if accel_window is not None and accel_window > 1:
@@ -215,9 +209,6 @@ def print_matrix_diagnostics(matrices):
               f"row_sum_max={row_sums.max():.6f}, avg_entropy={avg_H:.4f}")
 
 
-# ---------------------------
-# Example main usage
-# ---------------------------
 if __name__ == "__main__":
     try:
         p_data = np.load("driving_energy.npy")
@@ -225,7 +216,6 @@ if __name__ == "__main__":
     except Exception as e:
         raise RuntimeError("Cannot find data files 'driving_energy.npy' and 'driving_velocity.npy'") from e
 
-    # Train with sensible defaults; you can tweak acc/brake thresholds & smoothing
     centers, matrices = train_smart_markov(
         p_data,
         v_data,

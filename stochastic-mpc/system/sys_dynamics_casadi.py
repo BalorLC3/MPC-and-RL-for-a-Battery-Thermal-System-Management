@@ -2,7 +2,7 @@ import casadi as ca
 import numpy as np
 
 # Importamos el solver RK4 de CasADi que creamos en el paso anterior
-from casadi_ode_solver import rk4_step_ca
+from system.casadi_ode_solver import rk4_step_ca
 
 class SystemParameters:
     def __init__(self):
