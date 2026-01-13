@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # SCRIPT DE PRE-PROCESAMIENTO DE DATOS DE ENTROPÍA
 #
 # Propósito: Leer el archivo CSV original, limpiarlo, procesarlo y
-# guardar los arrays limpios de SOC y dV/dT en un archivo .npz.
+# guardar los arrays limpios de SOC y dV/dT en un archivo .npz
 # ===============================================================
 
 # --- 1. CONFIGURACIÓN ---

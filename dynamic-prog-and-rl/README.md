@@ -1,19 +1,4 @@
-# Battery Thermal Management (BTM)
-This folder contains multiple `.py` files that I used for a Stochastic MPC (SMPC) controller. In SMPC the main idea is to treat external disturbances as a random variable (RV) which is bounded to a set $M$, with a computed density distribution.
+# Exact Dynamic Programming & Approximate Policy Iteration (DP & API)
+Here with DP we refer to the classic solution for the Bellman equation in a grid space, and we used the Soft-Actor-Critic (SAC) as the API algorithm, Haarnoja (2018). The solution with SAC is very good, we recommend to be careful with the scale of the environment i.e., a reward function must have some dimension consciousness. Very big rewards were obtained when using kJ as a measure for the reward function which later didn't became smaller (the Policy didn't converge over time), but using kWh the policy converged to a locally optimal value.
 
-## Key Features:
-- Stochastic Model Predictive Control formulation
-- Robust constraint handling under uncertainty
-- Battery thermal dynamics modeling
-- Disturbance rejection for thermal management
-
-## Files Included:
-- `sys_dynamics.py` - System dynamics which connect all other needed computations for the system
-- `battery_models.py` - Battery thermo-electrical models
-- `entropy.py` - (reversible) Battery entropic heat data generation yields a `.npz` file
-- `driving_energy.py` - Energy used for a cycling driving data (i.e., UDDS), yields a `.npz` file
-
-# Results
-labels = ['DP', 'SMPC', 'DMPC', 'SAC', 'Termostato','l-SAC'] 
-energy_consumption = [150, 178, 190, 280, 338, 379]       # kJ
-time_computation = ['NC', ..., ..., 2.8e-5, 1e-5, 2.8e-5] # Seconds
+Also note that in this folder the system is written in JAX, this because CasADi symbolic expressions are difficult to work well when combined with `jax.Array` data. The 'stochastic-mpc' folder contains a Stochastic Model Predictive Control (SMPC) Model.

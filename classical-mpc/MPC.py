@@ -1,51 +1,58 @@
-from computations import compute_VT
 from lq_gain import lq_gain
+import casadi as ca
 import numpy as np
-import cvxpy as cp
 
-def MPC(F, G, A, B, Q, R, x0, N=6):
-    K, P = lq_gain(A, B, Q, R)  
+def MPC_casadi(F, G, A, B, Q, R, VT, x0, N=6):
+    K, P = lq_gain(A, B, Q, R)
     nx = A.shape[0]
-    nu = B.shape[1]  # = 1
-
-    c = cp.Variable((nu, N))      # c is (1, N)
-    x = cp.Variable((nx, N+1))    # x is (2, N+1)
-
+    nu = B.shape[1]
+    
+    opti = ca.Opti()
+    c = opti.variable(nu, N)  
+    x = opti.variable(nx, N+1)
     # Precompute matrices
-    FGK = F + G @ K               # (6, 2)
-    AK = A + B @ K                # (2, 2)
-    VT = compute_VT(F, G, K, A, B)  # terminal set
+    FGK = F + G @ K               
+    AK = A + B @ K                
 
     cost = 0
-    constraints = [x[:, 0] == x0]
+    opti.subject_to(x[:, 0] == x0)
 
     for i in range(N):
-        # Dynamics in c-parameterized form: x⁺ = AK x + B c
-        constraints += [x[:, i+1] == AK @ x[:, i] + B @ c[:, i]]
+        opti.subject_to(x[:, i+1] == AK @ x[:, i] + B @ c[:, i])
 
-        # Stage cost: u = Kx + c
-        u_i = K @ x[:, i] + c[:, i]   # (1,)
-        cost += cp.quad_form(x[:, i], Q) + cp.quad_form(u_i, R)
+        u_i = K @ x[:, i] + c[:, i]  
+        cost += x[:, i].T @ Q @ x[:, i] + u_i.T @ R @ u_i
 
-        # Constraint: F x + G u <= 1  →  (F + G K) x + G c <= 1
-        # Ensure G @ c[:, i] is (6,)
-        Gc = G @ c[:, i]  # G: (6,1), c[:,i]: (1,) → Gc: (6,)
-        constraints += [FGK @ x[:, i] + Gc <= np.ones(F.shape[0])]
+        opti.subject_to(FGK @ x[:, i] + G @ c[:, i] <= np.ones(F.shape[0]))
 
-    # Terminal cost
-    cost += cp.quad_form(x[:, N], P)
+    cost += x[:, N].T @ P @ x[:, N]
+    opti.subject_to(VT @ x[:, N] <= np.ones(VT.shape[0]))
 
-    # Terminal constraint
-    constraints += [VT @ x[:, N] <= np.ones(VT.shape[0])]
+    opti.minimize(cost)
 
-    prob = cp.Problem(cp.Minimize(cost), constraints)
-    prob.solve(solver=cp.OSQP, verbose=False)
+    p_opts = {"print_time": False, "verbose": False}
+    s_opts = {"max_iter": 1000, "tol": 1e-6, "print_level": 0}
+    opti.solver('ipopt', p_opts, s_opts)
 
-    if prob.status == "optimal":
-        print(c.shape)
-        u0 = (K @ x0 + c[:, 0].value).flatten()
-        
-        return cost.value, u0, c.value, x.value
-    else:
-        print(f"MPC failed: {prob.status}")
+    try:
+        sol = opti.solve()
+        c_opt = sol.value(c)
+        x_opt = sol.value(x)
+        u0 =  K @ x0 + c_opt[0]
+
+        J = sol.value(cost)
+        return J, float(u0), c_opt, x_opt
+    
+    except Exception as e:
+        print(f"MPC failed: {e}")
+        try:
+            c_opt = opti.debug.value(c)
+            x_opt = opti.debug.value(x)
+            if c_opt is not None and x_opt is not None:
+                u0 = (K @ x0 + c_opt[0]).flatten()
+                J = opti.debug.value(cost)
+                print("Returning suboptimal solution")
+                return J, u0, c_opt.T, x_opt
+        except:
+            pass
         return None, None, None, None

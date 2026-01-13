@@ -2,22 +2,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-
+from pathlib import Path
 # ===============================================================
-# SCRIPT DE PRE-PROCESAMIENTO DEL CICLO DE CONDUCCIÓN
-#
-# Propósito: Leer un archivo de texto de un ciclo de conducción (ej. UDDS),
-# convertirlo en un perfil de potencia de manejo (P_driv), y guardarlo
-# como un archivo .npy para ser usado como perturbación en la simulación.
+# PREPROCESSING OF DRIVING FILES
 # ===============================================================
-
-# --- 1. CONFIGURACIÓN Y PARÁMETROS DEL VEHÍCULO ---
 plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "serif",
-    "axes.labelsize": 13,
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12,
+    "text.usetex": False,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Microsoft YaHei"], # Change this to tex True & unicode to True
+    "axes.labelsize": 12,
+    "xtick.labelsize": 11,
+    "ytick.labelsize": 11,
     "axes.spines.top": True,
     "axes.spines.right": True,
     "axes.spines.left": True,
@@ -29,6 +24,7 @@ plt.rcParams.update({
     "grid.linestyle": "--",
     "savefig.dpi": 300
 })
+
 # Parámetros para la conversión de unidades
 MPH_TO_MPS = 0.44704  # 1 milla por hora = 0.44704 metros por segundo
 
@@ -43,15 +39,12 @@ DRIVETRAIN_EFF = 0.80  # Eficiencia del tren motriz (motor + transmisión)
 REGEN_EFF = 0.65       # Eficiencia del frenado regenerativo
 
 # Rutas de los archivos
-input_file_path = r'C:\Users\super\Desktop\Supernatural\TESIS\thermal-management\UDDS.txt' 
-# Dónde guardar los archivos .npy procesados
-output_dir = r'C:\Users\super\Desktop\Vasudeva\Manifold\engineering\predictive-control\stochastic-mpc'
+filename = 'driving_data/UDDS.txt'
+output_dir = Path.cwd() / filename
 power_output_path = os.path.join(output_dir, 'driving_energy.npy')
 velocity_output_path = os.path.join(output_dir, 'driving_velocity.npy')
 time_output_path = os.path.join(output_dir, 'driving_time.npy')
 
-
-# --- 2. FUNCIÓN DE DINÁMICA VEHICULAR ---
 
 def calculate_driving_power(v, a):
     """
@@ -91,9 +84,9 @@ def calculate_driving_power(v, a):
 # --- 3. PROCESAMIENTO DEL ARCHIVO DEL CICLO DE CONDUCCIÓN ---
 
 try:
-    df = pd.read_csv(input_file_path, sep='\s+', skiprows=1, names=['time_s', 'speed_mph'])
+    df = pd.read_csv(filename, sep='\s+', skiprows=1, names=['time_s', 'speed_mph'])
 except FileNotFoundError:
-    print(f"Error: No se encontró el archivo del ciclo de conducción en {input_file_path}")
+    print(f"Error: No se encontró el archivo del ciclo de conducción en {filename}")
     exit()
 
 # Conversión de unidades

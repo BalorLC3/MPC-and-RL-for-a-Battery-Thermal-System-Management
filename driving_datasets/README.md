@@ -1,0 +1,2 @@
+# Source Data
+The Urban Dynamometer Driving Schedule (UDDS) is the typicial dataset where a proposed control model for Battery Management Systems is tested. This folder also contains another two public available datasets. Which were not primarly used .

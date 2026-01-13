@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import solve_discrete_are
-from MPC_casadi import MPC_casadi      # your CasADi MPC solver
+from MPC import MPC_casadi      # your CasADi MPC solver
 from lq_gain import lq_gain            # returns K, P
 from computations import compute_VT    # terminal set, optional
 
@@ -25,9 +25,7 @@ F = np.array([[0, 1/8],
               [0, 0]])
 G = np.array([0, 0, 0, 0, 1, -1]).reshape(-1, 1)
 
-# ==========================================================
 # Parameters
-# ==========================================================
 x0 = np.array([-7.5, 0.5])   
 N = 6
 total_steps = 30
@@ -37,9 +35,7 @@ P = solve_discrete_are(A, B, Q, R)
 K, _ = lq_gain(A, B, Q, R)
 VT = compute_VT(F, G, K, A, B)
 
-# ==========================================================
 # Closed-loop MPC simulation (re-optimizing every step)
-# ==========================================================
 x_current = x0.copy()
 x_history = [x_current]
 u_history = []
@@ -69,9 +65,7 @@ for step in range(total_steps):
 x_closed_loop = np.array(x_history).T
 u_closed_loop = np.array(u_history)
 
-# ==========================================================
 # Open-loop MPC prediction (Mode 1 until N, then Mode 2 LQR)
-# ==========================================================
 x_open_loop = [x0.copy()]
 u_open_loop = []
 
@@ -111,9 +105,7 @@ print("J*(x0):   ", cost_x0)
 print("Jcl*(x0): ", cost_cl_x0)
 
 
-# ==========================================================
 # Plot 1: State trajectories (Fig. 2.4 style)
-# ==========================================================
 plt.figure(figsize=(9,6))
 plt.plot(x_closed_loop[0, :], x_closed_loop[1, :], 'o-', color='black',
          label='Closed-loop (re-optimizing)', markersize=4, linewidth=2)
@@ -132,9 +124,7 @@ plt.grid(True, linestyle=':', alpha=0.7)
 plt.tight_layout()
 plt.show()
 
-# ==========================================================
 # Plot 2: Control inputs (Fig. 2.5 style)
-# ==========================================================
 plt.figure(figsize=(10,5))
 plt.step(range(len(u_closed_loop)), u_closed_loop, where='post',
          label='Closed-loop (re-optimizing)', color='black', linewidth=2)
