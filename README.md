@@ -22,5 +22,5 @@ Model-Preditive-Control_Battery-Management-System
 ## Results
 | Thermostat |  SMPC  |   SAC   |
 |------------|--------|---------|
-| ![Thermostat](xresults_btm/thermostat_controller.png) |  ![SMPC](xresults_btm/smpc_controller.png) ![SAC](sac_h0_controller.png) | | ![SAC](xresults_btm/sac_h0_controller.png) |
+| ![Thermostat](xresults_btm/thermostat_controller.png) |  ![SMPC](xresults_btm/smpc_controller.png) ![SAC](sac_h0_controller.png) | ![SAC](xresults_btm/sac_h0_controller.png) |
 
