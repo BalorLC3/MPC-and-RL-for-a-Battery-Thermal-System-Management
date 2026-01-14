@@ -10,13 +10,13 @@ All control strategies were made for a high fidelity BTMS model, these strategie
 - Backward Dynamic Programming
 - Reinforcement Learning
 
-## Context
-'''
+## Structure
+```
 Model-Preditive-Control_Battery-Management-System \\
 ├── classical-mpc \\
 ├── dynamic-prog-and-rl \\
 ├── stochastic-mpc \\
 ├── utils-dynamics \\
 └── results_btm
-'''
+```
 ## Results
