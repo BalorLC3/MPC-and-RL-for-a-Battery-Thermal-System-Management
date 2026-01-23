@@ -25,20 +25,19 @@ plt.rcParams.update({
     "savefig.dpi": 300
 })
 
-# Parámetros para la conversión de unidades
-MPH_TO_MPS = 0.44704  # 1 milla por hora = 0.44704 metros por segundo
+# Unit conversion
+MPH_TO_MPS = 0.44704   
 
-# Parámetros del Vehículo (valores típicos para un sedán eléctrico)
-M_VEHICLE = 1850.0     # Masa del vehículo [kg]
-G_ACCEL = 9.81         # Aceleración de la gravedad [m/s^2]
-C_RR = 0.02            # Coeficiente de resistencia a la rodadura (adimensional)
-RHO_AIR = 1.2          # Densidad del aire [kg/m^3]
+# Vehicle parameters (typical of a electrical sedan)
+M_VEHICLE = 1850.0     # Vehicle mass [kg]
+G_ACCEL = 9.81         # Gravity acceleration [m/s^2]
+C_RR = 0.02            # Coefficient of rolling resistance (adimensional)
+RHO_AIR = 1.2          # Air density [kg/m^3]
 A_FRONTAL = 2.8        # Área frontal del vehículo [m^2]
 C_DRAG = 0.35          # Coeficiente de arrastre aerodinámico (adimensional)
 DRIVETRAIN_EFF = 0.80  # Eficiencia del tren motriz (motor + transmisión)
 REGEN_EFF = 0.65       # Eficiencia del frenado regenerativo
 
-# Rutas de los archivos
 filename = 'driving_data/UDDS.txt'
 output_dir = Path.cwd() / filename
 power_output_path = os.path.join(output_dir, 'driving_energy.npy')
@@ -105,56 +104,39 @@ p_driv_profile = df['P_driv_W'].values
 velocity_profile = df['speed_mps'].values
 time_profile = df['time_s'].values
 
-# --- MODIFICACIÓN: DUPLICAR EL CICLO DE CONDUCCIÓN (A -> AA) ---
+# Duplicate driving cycle (this is the modification)
 p_driv_profile_duplicated = np.concatenate([p_driv_profile, p_driv_profile])
 velocity_profile_duplicated = np.concatenate([velocity_profile, velocity_profile])
-# Para el tiempo, necesitamos crear una secuencia continua
-total_original_time = time_profile[-1] + dt  # Tiempo total del ciclo original
+
+total_original_time = time_profile[-1] + dt  # Total time of original cycle
 time_duplicated = np.concatenate([time_profile, time_profile + total_original_time])
 
-# Guardar todos los perfiles duplicados para usarlos en la simulación
+# Save profiles
 np.save(power_output_path, p_driv_profile_duplicated)
 np.save(velocity_output_path, velocity_profile_duplicated)
 
-print(f"Perfiles de potencia y velocidad guardados exitosamente en:")
-print(f"  - Potencia: {power_output_path}")
-print(f"  - Velocidad: {velocity_output_path}")
-print(f"  - Tiempo: {time_output_path}")
-print(f"\nNúmero de puntos de datos del ciclo original: {len(p_driv_profile)}")
-print(f"Número de puntos de datos después de duplicar: {len(p_driv_profile_duplicated)}")
 
 
-# --- 4. VISUALIZACIÓN PARA VERIFICACIÓN ---
-
-# Crear un DataFrame extendido para visualización
 fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
 
-# Gráfico 1: Perfil de Potencia Resultante (P_driv) - Duplicado
-axs[0].plot(time_duplicated, p_driv_profile_duplicated / 1000, 'r-') # en kW para mejor escala
+axs[0].plot(time_duplicated, p_driv_profile_duplicated / 1000, 'r-') 
 axs[0].set_ylabel('Potencia (kW)')
 axs[0].grid(True)
 axs[0].axhline(0, color='black', lw='1.5', ls='--')
 axs[0].text(500, 30, 'Propulsión', color='black')
 axs[0].text(500, -20, 'Frenado Regenerativo', color='black')
 
-# Gráfico 2: Perfil de Velocidad Duplicado
 axs[1].plot(time_duplicated, velocity_profile_duplicated, 'b-')
 axs[1].set_ylabel('Velocidad (m/s)')
 axs[1].grid(True)
 axs[1].set_xlabel('Tiempo (s)')
 
-# # Gráfico 3: Perfil de Velocidad en mph (para referencia)
-# axs[2].plot(time_duplicated, velocity_profile_duplicated / MPH_TO_MPS, 'g-')
-# axs[2].set_ylabel('Velocidad (mph)')
-# axs[2].set_xlabel('Tiempo (s)')
-# axs[2].grid(True)
+
 
 plt.tight_layout()
 
-# Guardar la figura también
 plt.show()
 
-# Mostrar estadísticas comparativas
 print("\n--- ESTADÍSTICAS COMPARATIVAS ---")
 print(f"Potencia máxima (propulsión): {p_driv_profile.max()/1000:.2f} kW")
 print(f"Potencia mínima (regeneración): {p_driv_profile.min()/1000:.2f} kW")
