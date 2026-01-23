@@ -5,32 +5,32 @@ import numpy as np
 # GENERIC COOLING SYSTEM COMPONENT MODELS (CASADI VERSION)
 # ===============================================================
 
-# Parámetros del Compresor
+# Compressor parameters
 COMP_MAX_SPEED_RPM = 10000.0
-COMP_NOMINAL_SPEED_RPM = 6000.0  # Velocidad de máxima eficiencia
-COMP_MAX_VOL_EFF = 0.95         # Eficiencia volumétrica a baja velocidad
-COMP_MAX_ISEN_EFF = 0.80        # Eficiencia isentrópica máxima
+COMP_NOMINAL_SPEED_RPM = 6000.0  # Maximum efficiency speed
+COMP_MAX_VOL_EFF = 0.95         # Volumetric efficiency at low speed
+COMP_MAX_ISEN_EFF = 0.80        # Maximum isentropic efficiency
 
-# Parámetros de la Bomba
+# Pump parameters
 PUMP_MAX_SPEED_RPM = 8000.0
 PUMP_MAX_VOL_EFF = 0.98
 PUMP_PRESSURE_COEFF = 3300.0  # Pa / (kg/s)^2
 
-# Parámetros del Motor Eléctrico
+# Motor parameters
 MOTOR_MAX_EFF = 0.92
 MOTOR_NOMINAL_SPEED_RPM = 5000.0
 
-# --- Helper interno para replicar jnp.clip ---
+# --- Intern helper to replicate jnp.clip ---
 def _clip(val, min_val, max_val):
     """Equivalente a jnp.clip(val, min, max) usando primitivas CasADi"""
     return ca.fmin(ca.fmax(val, min_val), max_val)
 
 def get_volumetric_eff(speed_rpm, max_speed_rpm=COMP_MAX_SPEED_RPM, max_eff=COMP_MAX_VOL_EFF):
-    # ca.fmax es el equivalente a jnp.maximum
+    # ca.fmax is equivalent to jnp.maximum
     s = ca.fmax(speed_rpm, 0.0)
     
     slope = 0.4
-    # Evitamos división por cero si max_speed_rpm fuera simbólico (aunque aquí es cte)
+    # Avoid division by zero if max_speed_rpm were symbolic (though it's constant here)
     eff = max_eff - slope * (s / (max_speed_rpm + 1e-9))
     
     return _clip(eff, 0.0, max_eff)
