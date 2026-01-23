@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({
     "text.usetex": False,
     "font.family": "sans-serif",
-    "font.sans-serif": ["Microsoft YaHei"], # Change this to tex True & unicode to True
+    "font.sans-serif": ["Microsoft YaHei"], 
     "axes.labelsize": 12,
     "xtick.labelsize": 11,
     "ytick.labelsize": 11,
@@ -11,7 +11,7 @@ plt.rcParams.update({
     "axes.spines.right": True,
     "axes.spines.left": True,
     "axes.spines.bottom": True,
-    "figure.figsize": (4.0, 10.0), # TO paste in the Thesis is okay to use (4.0, 10.0), but (6.0, 10.0) is better for normal visualizaton
+    "figure.figsize": (4.0, 10.0), 
     "lines.linewidth": 1.4,
     "axes.grid": True,
     "grid.alpha": 0.25,
@@ -45,8 +45,8 @@ def plot_energy_and_time(
         label_text = f'{percentage:.0f}%'
         
         ax.text(
-            bar.get_x() + bar.get_width() / 2, # Posición X (centro de la barra)
-            bar.get_height() / 2,              # Posición Y (mitad de la altura)
+            bar.get_x() + bar.get_width() / 2, # X Position (center of bar)
+            bar.get_height() / 2,              # Y Position (half of height)
             label_text,                        
             ha='center',                       
             va='center',                       
@@ -72,7 +72,7 @@ def plot_energy_and_time(
     
     ax.bar(causal_labels, causal_times, color='lightgray', edgecolor='black')
     ax.set_ylabel("Tiempo de cómputo [s]")
-    ax.set_yscale("log")  # muy importante para 1e-5 – 1e-2
+    ax.set_yscale("log") 
     ax.set_title("Tiempo de Cómputo")
 
     plt.tight_layout()
