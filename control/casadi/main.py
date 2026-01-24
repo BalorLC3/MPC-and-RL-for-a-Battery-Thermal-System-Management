@@ -7,8 +7,8 @@ from utils.plot_funs import show_results
 
 if __name__ == "__main__":
     try: 
-        driving_data = np.load('data/driving_energy.npy', mmap_mode='r')
-        velocity_data = np.load('data/driving_velocity.npy', mmap_mode='r')
+        driving_data = np.load('data/processed/driving_energy.npy', mmap_mode='r')
+        velocity_data = np.load('data/processed/driving_velocity.npy', mmap_mode='r')
         print('Datos cargados.')
     except:
         print("Change directory, files not found")

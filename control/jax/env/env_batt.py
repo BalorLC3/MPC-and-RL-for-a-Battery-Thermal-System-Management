@@ -3,8 +3,8 @@ from gymnasium import spaces
 import numpy as np
 import jax
 import jax.numpy as jnp
-from system.sys_dynamics_jax import SystemParameters
-from system.jax_ode_solver import rk4_step
+from control.jax.system.sys_dynamics_jax import SystemParameters
+from control.jax.system.jax_ode_solver import rk4_step
 from dataclasses import dataclass, field
 
 

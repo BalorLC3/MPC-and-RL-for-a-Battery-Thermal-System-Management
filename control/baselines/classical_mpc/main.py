@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import solve_discrete_are
-from MPC import MPC_casadi      
-from lq_gain import lq_gain            # returns K, P
-from computations import compute_VT    # terminal set, optional
+from control.baselines.classical_mpc.MPC import MPC_casadi      
+from control.baselines.classical_mpc.lq_gain import lq_gain            # returns K, P
+from control.baselines.classical_mpc.computations import compute_VT    # terminal set, optional
 
 # ==========================================================
 # System definition (Example 2.1 / 2.3 – Cannon, 2016)

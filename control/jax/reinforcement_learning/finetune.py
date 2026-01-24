@@ -1,7 +1,7 @@
 import argparse
-from src.env_batt import BatteryCoolingEnv
+from control.jax.env.env_batt import BatteryCoolingEnv
 from sbx import SAC
-from utils.trainer import TrainExport
+from control.jax.utils.trainer import TrainExport
 import os
 
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
