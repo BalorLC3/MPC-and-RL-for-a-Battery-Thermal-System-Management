@@ -1,10 +1,10 @@
 import casadi as ca
 import numpy as np
-from system.casadi_ode_solver import rk4_step_ca
-from system.sys_dynamics_casadi import SystemParameters
+from control.casadi.system.casadi_ode_solver import rk4_step_ca
+from control.casadi.system.sys_dynamics_casadi import SystemParameters
 from collections import deque
-from controllers.markov_chain import train_smart_markov
-from controllers.base import BaseController
+from control.casadi.controllers.markov_chain import train_smart_markov
+from control.casadi.controllers.base import BaseController
 import time
     # minimize
     # J = \mathbb{E}_{P_driv} \left[\sum_{k=0}^{N_p-1} P_{comp}(k) + P_{pump}(k) + \alpha(T_{batt}(N_p) - T_{batt,des})^2 \right]

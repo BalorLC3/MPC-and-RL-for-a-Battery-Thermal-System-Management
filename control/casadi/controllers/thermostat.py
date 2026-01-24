@@ -1,6 +1,6 @@
 import casadi as ca
 import numpy as np
-from controllers.base import BaseController
+from control.casadi.controllers.base import BaseController
 
 class Thermostat(BaseController):
     '''Rule based controller; threshold based'''

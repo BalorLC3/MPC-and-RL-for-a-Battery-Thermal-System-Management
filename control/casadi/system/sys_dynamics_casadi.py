@@ -1,6 +1,6 @@
 import casadi as ca
 import numpy as np
-from system.casadi_ode_solver import rk4_step_ca
+from control.casadi.system.casadi_ode_solver import rk4_step_ca
 
 class SystemParameters:
     def __init__(self):

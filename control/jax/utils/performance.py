@@ -1,5 +1,5 @@
 import time
-from utils.setup import run_simulation
+from control.jax.utils.setup import run_simulation
 import jax
 
 def time_total_simulation(

@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 from functools import partial
-from system.jax_ode_solver import rk4_step
+from control.jax.system.jax_ode_solver import rk4_step
 import time
 
 # --- GRID CONFIGURATION ---

@@ -1,8 +1,8 @@
 import casadi as ca
 import numpy as np
-from system.efficiency import (get_volumetric_eff, get_isentropic_eff, get_motor_eff,
+from control.casadi.system.efficiency import (get_volumetric_eff, get_isentropic_eff, get_motor_eff,
                         get_pump_pressure_drop, PUMP_MAX_SPEED_RPM, COMP_MAX_SPEED_RPM)
-from system.battery_models import get_ocv, get_rbatt, get_cnom, get_dvdt
+from control.casadi.system.battery_models import get_ocv, get_rbatt, get_cnom, get_dvdt
 
 # ===============================================================
 # 1. PURE PHYSICS ODE (Stateless - CasADi Version)

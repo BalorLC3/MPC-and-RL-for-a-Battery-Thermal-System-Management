@@ -3,14 +3,14 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 # Own modules
-from system.sys_dynamics_jax import SystemParameters
-from controllers.dynamic_programming import run_dp_offline, make_dp_controller_fn
-from controllers.thermostat import thermostat_logic_jax
-from controllers.sac import SBXActor
-from utils.setup import run_simulation, load_driving_cycle
-from utils.performance import time_total_simulation
-from utils.plot_funs import show_results 
-from src.env_batt import ObservationConfig
+from control.jax.system.sys_dynamics_jax import SystemParameters
+from control.jax.controllers.dynamic_programming import run_dp_offline, make_dp_controller_fn
+from control.jax.controllers.thermostat import thermostat_logic_jax
+from control.jax.reinforcement_learning.sac import SBXActor
+from control.jax.utils.setup import run_simulation, load_driving_cycle
+from control.jax.utils.performance import time_total_simulation
+from control.jax.utils.plot_funs import show_results 
+from control.jax.env.env_batt import ObservationConfig
 import pickle
 
 def make_controller(controller_name, dist, params, horizon):
@@ -25,7 +25,7 @@ def make_controller(controller_name, dist, params, horizon):
         return thermostat_logic_jax, {}
 
     if controller_name.startswith("sac"):
-        with open(f"results/{controller_name}/actor_weights.pkl", "rb") as f:
+        with open(f"control/jax/results/{controller_name}/actor_weights.pkl", "rb") as f:
             params_nn = pickle.load(f)
 
         actor = SBXActor(n_actions=2)

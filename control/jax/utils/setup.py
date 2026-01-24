@@ -2,10 +2,10 @@
 import jax
 import jax.numpy as jnp
 from functools import partial
-from system.jax_ode_solver import rk4_step
+from control.jax.system.jax_ode_solver import rk4_step
 import numpy as np
 
-def load_driving_cycle(path="data/driving_energy.npy", fallback_len=600):
+def load_driving_cycle(path="data/processed/driving_energy.npy", fallback_len=600):
     try:
         raw = np.load(path, mmap_mode="r")
         print("Driving cycle loaded.")

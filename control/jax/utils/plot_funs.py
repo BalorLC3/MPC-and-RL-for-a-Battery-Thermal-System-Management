@@ -79,8 +79,8 @@ def plot_results(df_controller, name='thermostat', dt=1.0, ): # Added dt argumen
     axs[4].grid(True, which='both')
     axs[4].set_xlim(0, len(time))
     axs[4].set_ylim(0, 400)
-
-    save_dir = Path(r"C:\Users\super\Desktop\Vasudeva\Manifold\engineering\predictive-control\xresults_btm")    
+    
+    save_dir = Path('results')    
     save_dir.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_dir / f"{name}_controller.png", bbox_inches='tight', dpi=300)
     plt.show()

@@ -1,9 +1,15 @@
+"""
+Run from repository root:
+
+    python -m control.casadi.main
+"""
+
 import numpy as np
-from system.sys_dynamics_casadi import BatteryThermalSystem, SystemParameters
-from utils.setup import SimConfiguration, run_simulation
-from controllers.thermostat import Thermostat
-from controllers.mpc import DMPC, SMPC
-from utils.plot_funs import show_results
+from control.casadi.system.sys_dynamics_casadi import BatteryThermalSystem, SystemParameters
+from control.casadi.utils.setup import SimConfiguration, run_simulation
+from control.casadi.controllers.thermostat import Thermostat
+from control.casadi.controllers.mpc import DMPC, SMPC
+from control.casadi.utils.plot_funs import show_results
 
 if __name__ == "__main__":
     try: 

@@ -1,3 +1,9 @@
+"""
+Run from repository root:
+
+    python -m control.jax.reinforcement_learning.finetune
+"""
+
 import argparse
 from control.jax.env.env_batt import BatteryCoolingEnv
 from sbx import SAC
