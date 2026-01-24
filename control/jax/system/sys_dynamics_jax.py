@@ -18,7 +18,7 @@ class SystemParameters:
         self.h_cout_kJ = 284.3
         self.h_evaout_kJ = 250.9
         
-        # --- PARÁMETROS DEL PACK  ---
+        # --- PACK PARAMETERS  ---
         self.m_batt = 40.0       
         self.C_batt = 1350.0     
         self.N_series = 96.0       
