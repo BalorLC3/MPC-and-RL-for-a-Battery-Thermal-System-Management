@@ -116,7 +116,7 @@ results/sac_h10/finetune/
 Compare thermostat, DP, and trained RL policies:
 
 ```bash
-python control/jax/experiments.py
+python -m control.jax.experiments
 ```
 
 This script evaluates all controllers on the same driving cycle and reports both **performance and execution time**.
