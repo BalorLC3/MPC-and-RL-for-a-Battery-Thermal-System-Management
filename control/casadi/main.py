@@ -15,7 +15,7 @@ if __name__ == "__main__":
     try: 
         driving_data = np.load('data/processed/driving_energy.npy', mmap_mode='r')
         velocity_data = np.load('data/processed/driving_velocity.npy', mmap_mode='r')
-        print('Datos cargados.')
+        print('Data loaded.')
     except:
         print("Change directory, files not found")
     dt = 1.0
@@ -25,6 +25,7 @@ if __name__ == "__main__":
         T_amb = 40.0,
         dt = dt
     )
+    plot_config = 'horizontal'
 
     params = SystemParameters()
     init_state = {'T_batt': 30.0, 'T_clnt': 30.0, 'soc': 0.8}
@@ -33,17 +34,17 @@ if __name__ == "__main__":
     # ==========================================
     # SIMULACIÓN TERMOSTATO (BASELINE)
     # ==========================================
-    print("\n--- Ejecutando Termostato ---")
+    print("\n--- Executing Thermostat ---")
     env_thermo = BatteryThermalSystem(init_state, params) # Instancia nueva
     ctrl_thermo = Thermostat()
     
     df_thermo = run_simulation(env_thermo, ctrl_thermo, config, verbose=0)
-    show_results(df_thermo, 'thermostat')
+    show_results(df=df_thermo, controller_name='thermostat', config=plot_config)
 
     # ==========================================
     # SIMULACIÓN NMPC (DETERMINISTA)
     # ==========================================
-    print("\n--- Ejecutando DMPC ---")    
+    print("\n--- Executing DMPC ---")    
     ctrl_DMPC = DMPC(
         dt=dt, 
         T_des=T_des,
@@ -53,24 +54,24 @@ if __name__ == "__main__":
     )
     env_dmpc = BatteryThermalSystem(init_state, params)    
     df_dmpc = run_simulation(env_dmpc, ctrl_DMPC, config, verbose=0)
-    show_results(df_dmpc, 'dmpc')
+    show_results(df=df_dmpc, controller_name='dmpc', config=plot_config)
 
     # ==========================================
     # SIMULACIÓN SMPC (ESTOCASTICO)
     # ==========================================
-    print("\n--- Ejecutando SMPC ---")
+    print("\n--- Executing SMPC ---")
     ctrl_SMPC = SMPC(
         driving_data,
         velocity_data,
         dt=dt,
         T_des=T_des,
         horizon=horizon,
-        alpha=0.094, 
+        alpha=0.093, 
         n_clusters=4
     )
 
     env_smpc = BatteryThermalSystem(init_state, params)
     df_smpc = run_simulation(env_smpc, ctrl_SMPC, config, verbose=0)
-    show_results(df_smpc, 'smpc')
+    show_results(df=df_smpc, controller_name='smpc', config=plot_config)
 
 
