@@ -9,9 +9,9 @@ parameters
 import numpy as np
 import jax.numpy as jnp
 import pickle
-
+import matplotlib.pyplot as plt
 from control.baselines.config import SystemParameters
-from control.utils.plot_helper import show_sensitivity
+from control.utils.plot_helper import show_sensitivity, PLOT_CONFIG
 
 # CasADi / MPC
 from control.casadi.system.sys_dynamics_casadi import BatteryThermalSystem
@@ -24,7 +24,7 @@ from control.jax.utils.setup import run_simulation as run_simulation_jax, load_d
 from control.jax.env.env_batt import ObservationConfig
 import jax
 
-
+plt.rcParams.update(PLOT_CONFIG)
 # ---------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # --- Plot ---
     show_sensitivity(
         controller_name='dmpc_sensitivity',
-        config='horizontal',
+        config='vertical',
         dt=dt,
         df_minus=df_dmpc['minus'],
         df_base=df_dmpc['base'],
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     show_sensitivity(
         controller_name='sac_sensitivity',
-        config='horizontal',
+        config='vertical',
         dt=dt,
         hist_minus=hist_sac['minus'],
         hist_base=hist_sac['base'],

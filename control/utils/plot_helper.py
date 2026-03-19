@@ -187,7 +187,6 @@ def plot_sensitivity(
     label_plot(axs[4], 'Energia de Enf.' + '\n' + r'($P_{cool}$) [kJ]', config)
     axs[4].set_xlim(0, time[-1]); axs[4].set_ylim(0, 400)
 
-    fig.suptitle(f'Sensibilidad — {param_name}', fontsize=10, y=1.01)
     _save(name, 'sensitivity')
     plt.show()
 
@@ -231,7 +230,7 @@ def show_sensitivity(
     if df_base  is None: df_base  = _hist_to_df(hist_base)
     if df_plus  is None: df_plus  = _hist_to_df(hist_plus)
 
-    for tag, df in [('−20%', df_minus), ('Base', df_base), ('+20%', df_plus)]:
+    for tag, df in [('-20%', df_minus), ('Base', df_base), ('+20%', df_plus)]:
         print(f"[{tag}] Total Energy: {df['P_cooling'].sum()/1000:.4f} kJ | "
               f"Max T_batt: {df['T_batt'].max():.3f} °C")
 
