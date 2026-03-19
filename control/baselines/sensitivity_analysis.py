@@ -34,8 +34,8 @@ def make_varied_params(variance: float) -> SystemParameters:
     Returns a fresh SystemParameters scaled by (1 + variance).
     """
     params = SystemParameters()
-    params.r_int_scale       *= (1 + variance)
-    params.h_batt            *= (1 + variance)
+    # params.r_int_scale       *= (1 + variance)
+    # params.h_batt            *= (1 + variance)
     params.comp_max_isen_eff *= (1 + variance)
     return params
 
@@ -115,7 +115,8 @@ if __name__ == "__main__":
 
     # --- Plot ---
     show_sensitivity(
-        controller_name='dmpc_sensitivity',
+        controller_name='dmpc',
+        param_name='comp_max_isen_eff',
         config='vertical',
         dt=dt,
         df_minus=df_dmpc['minus'],
@@ -124,7 +125,8 @@ if __name__ == "__main__":
     )
 
     show_sensitivity(
-        controller_name='sac_sensitivity',
+        controller_name='sac',
+        param_name='comp_max_isen_eff',
         config='vertical',
         dt=dt,
         hist_minus=hist_sac['minus'],

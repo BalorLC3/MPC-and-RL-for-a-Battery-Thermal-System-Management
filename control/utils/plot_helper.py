@@ -153,7 +153,7 @@ def plot_sensitivity(
     shade(axs[0], 'Q_cool', 'steelblue')
     label_plot(axs[0], r'Calor Removido' + '\n' + r'($\dot{Q}_{cool}$) [W]', config)
     axs[0].set_xlim(0, time[-1]); axs[0].set_ylim(0, 2000)
-    axs[0].legend(fontsize=7, frameon=True)
+    axs[0].legend(frameon=True)
 
     shade(axs[1], 'w_pump', 'tomato')
     label_plot(axs[1], r'Vel. Bomba' + '\n' + r'($\omega_{pump}$) [RPM]', config)
@@ -187,7 +187,7 @@ def plot_sensitivity(
     label_plot(axs[4], 'Energia de Enf.' + '\n' + r'($P_{cool}$) [kJ]', config)
     axs[4].set_xlim(0, time[-1]); axs[4].set_ylim(0, 400)
 
-    _save(name, 'sensitivity')
+    _save(name, f'sensitivity_{param_name}')
     plt.show()
 
 
@@ -217,6 +217,7 @@ def show_results(
 
 def show_sensitivity(
     controller_name: str,
+    param_name: str,
     config: str,
     dt: float = 1.0,
     df_minus:   pd.DataFrame = None,
@@ -236,7 +237,7 @@ def show_sensitivity(
 
     plot_sensitivity(
         df_minus=df_minus, df_base=df_base, df_plus=df_plus,
-        param_name=controller_name, name=controller_name,
+        param_name=param_name, name=controller_name,
         config=config, dt=dt,
     )
 
