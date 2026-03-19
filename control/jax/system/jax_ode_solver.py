@@ -1,7 +1,11 @@
 import jax
 import jax.numpy as jnp
-from control.jax.system.efficiency_jax import (get_volumetric_eff, get_isentropic_eff, get_motor_eff,
-                            get_pump_pressure_drop, PUMP_MAX_SPEED_RPM, COMP_MAX_SPEED_RPM)
+from control.jax.system.efficiency_jax import (
+    get_volumetric_eff, 
+    get_isentropic_eff, 
+    get_motor_eff,
+    get_pump_pressure_drop
+)
 from control.jax.system.battery_models_jax import get_ocv_jax, get_rbatt_jax, get_cnom_jax, get_dvdt_jax
 
 # ===============================================================
@@ -10,7 +14,12 @@ from control.jax.system.battery_models_jax import get_ocv_jax, get_rbatt_jax, ge
 def battery_dynamics_ode(state, controls, disturbances, params):
     """
     Calculates dy/dt. All inputs must be JAX arrays or scalars.
-    params: SystemParameters object (JAX Pytree)
+    
+        Args:
+        state: jax.ndarray or DM vector [T_batt, T_clnt, soc]
+        controls: jax.ndarray or DM vector [w_comp, w_pump]
+        disturbances: jax.ndarray or DM vector [P_driv, T_amb]
+        params: SystemParameters object (instance)
     """
     # --- Unpack State & Inputs ---
     T_batt, T_clnt, soc = state[0], state[1], state[2]
@@ -18,22 +27,22 @@ def battery_dynamics_ode(state, controls, disturbances, params):
     P_driv, T_amb = disturbances[0], disturbances[1]
     
     # --- A. Cooling System Model ---
-    eta_vol_pump = get_volumetric_eff(w_pump, PUMP_MAX_SPEED_RPM, 0.98)
+    eta_vol_pump = get_volumetric_eff(w_pump, params)
     m_clnt_dot_calc = params.V_pump * (w_pump / 60.0) * eta_vol_pump * params.rho_clnt
     m_clnt_dot = jnp.maximum(m_clnt_dot_calc, 0.0)
 
     delta_p_pump = get_pump_pressure_drop(m_clnt_dot)
-    eta_p_motor = get_motor_eff(w_pump)
+    eta_p_motor = get_motor_eff(w_pump, params)
     
     # Safe division using jnp.where
     P_pump_mech = jnp.where(params.rho_clnt > 0, (m_clnt_dot * delta_p_pump) / params.rho_clnt, 0.0)
     P_pump_elec = jnp.where(eta_p_motor > 0, P_pump_mech / eta_p_motor, 0.0)
 
-    eta_vol_comp = get_volumetric_eff(w_comp, COMP_MAX_SPEED_RPM, 0.95)
+    eta_vol_comp = get_volumetric_eff(w_comp, params.comp_max_speed_rpm, 0.95)
     m_rfg_dot = params.V_comp * (w_comp / 60.0) * eta_vol_comp * params.rho_rfg
     
-    eta_isen = get_isentropic_eff(w_comp)
-    eta_c_motor = get_motor_eff(w_comp)
+    eta_isen = get_isentropic_eff(w_comp, params)
+    eta_c_motor = get_motor_eff(w_comp, params)
     h_delta_J = (params.h_cout_kJ - params.h_evaout_kJ) * 1000.0
     
     P_comp_mech = jnp.where(eta_isen > 0, (m_rfg_dot * h_delta_J) / eta_isen, 0.0)

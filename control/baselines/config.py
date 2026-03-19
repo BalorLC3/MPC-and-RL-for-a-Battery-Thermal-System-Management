@@ -26,7 +26,7 @@ class SystemParameters:
         # Compressor 
         self.comp_max_speed_rpm      = 10000.0
         self.comp_nominal_speed_rpm  = 6000.0
-        self.comp_max_vol_eff        = 0.95
+        self.comp_max_vol_eff        = 0.98
         self.comp_max_isen_eff       = 0.80  
 
         # Pump
