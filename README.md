@@ -137,7 +137,7 @@ The **dynamic programming solution** serves as a non‑implementable lower bound
 We can also analyze the variability of the response on each controller with:
 
 ```bash
-python -m python -m control.baselines.sensitivity_analysis
+python -m control.baselines.sensitivity_analysis
 ```
 For example, varying the internal resistance of the battery using DMPC and $\sigma=0.2$
 
