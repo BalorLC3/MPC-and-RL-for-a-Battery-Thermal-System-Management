@@ -31,14 +31,14 @@ def battery_dynamics_ode(state, controls, disturbances, params):
     m_clnt_dot_calc = params.V_pump * (w_pump / 60.0) * eta_vol_pump * params.rho_clnt
     m_clnt_dot = jnp.maximum(m_clnt_dot_calc, 0.0)
 
-    delta_p_pump = get_pump_pressure_drop(m_clnt_dot)
+    delta_p_pump = get_pump_pressure_drop(m_clnt_dot, params)
     eta_p_motor = get_motor_eff(w_pump, params)
     
     # Safe division using jnp.where
     P_pump_mech = jnp.where(params.rho_clnt > 0, (m_clnt_dot * delta_p_pump) / params.rho_clnt, 0.0)
     P_pump_elec = jnp.where(eta_p_motor > 0, P_pump_mech / eta_p_motor, 0.0)
 
-    eta_vol_comp = get_volumetric_eff(w_comp, params.comp_max_speed_rpm, 0.95)
+    eta_vol_comp = get_volumetric_eff(w_comp, params)
     m_rfg_dot = params.V_comp * (w_comp / 60.0) * eta_vol_comp * params.rho_rfg
     
     eta_isen = get_isentropic_eff(w_comp, params)
