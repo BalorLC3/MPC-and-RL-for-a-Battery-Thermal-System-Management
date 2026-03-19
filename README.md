@@ -30,7 +30,7 @@ The framework highlights trade‑offs in _performance, robustness, optimality, a
 ```text
 predictive-control
 ├── control
-│   ├── baselines              # Classical and heuristic controllers
+│   ├── baselines              # All used parameters + sensitivity analysis
 │   ├── casadi                 # MPC & SMPC implementations (CasADi)
 │   ├── jax                    # Dynamic programming & RL (JAX)
 │   │   ├── env                # Simulation environments
@@ -133,6 +133,17 @@ Representative temperature regulation results are shown below:
 
 The **dynamic programming solution** serves as a non‑implementable lower bound on achievable cost. **SMPC** demonstrates robust constraint handling under uncertainty, while **SAC** highlights the strengths and limitations of model‑free learning in safety‑critical thermal control problems.
 
+### Sensitivity Analysis
+We can also analyze the variability of the response on each controller with:
+
+```bash
+python -m python -m control.baselines.sensitivity_analysis
+```
+For example, varying the internal resistance of the battery using DMPC and $\sigma=0.2$
+
+<img src="results/dmpc_sensitivity_rint.png" width="200" />
+
+where the shaded area is the variance.
 ---
 
 ## Scope and Design Notes

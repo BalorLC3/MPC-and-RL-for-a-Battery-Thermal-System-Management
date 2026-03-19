@@ -231,6 +231,7 @@ def show_sensitivity(
     if df_base  is None: df_base  = _hist_to_df(hist_base)
     if df_plus  is None: df_plus  = _hist_to_df(hist_plus)
 
+    print(f"> Parameter modified: {param_name}")
     for tag, df in [('-20%', df_minus), ('Base', df_base), ('+20%', df_plus)]:
         print(f"[{tag}] Total Energy: {df['P_cooling'].sum()/1000:.4f} kJ | "
               f"Max T_batt: {df['T_batt'].max():.3f} °C")

@@ -34,8 +34,8 @@ def make_varied_params(variance: float) -> SystemParameters:
     Returns a fresh SystemParameters scaled by (1 + variance).
     """
     params = SystemParameters()
-    # params.r_int_scale       *= (1 + variance)
-    # params.h_batt            *= (1 + variance)
+    params.r_int_scale       *= (1 + variance)
+    params.h_batt            *= (1 + variance)
     params.comp_max_isen_eff *= (1 + variance)
     return params
 
@@ -84,6 +84,7 @@ if __name__ == "__main__":
     T_des     = 33.0
     horizon   = 10
     sac_name  = "sac_h0"
+    param_name = "three"
 
     init_state_ca  = {'T_batt': 30.0, 'T_clnt': 30.0, 'soc': 0.8}
     init_state_jax = jnp.array([30.0, 30.0, 0.8])
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     # --- Plot ---
     show_sensitivity(
         controller_name='dmpc',
-        param_name='comp_max_isen_eff',
+        param_name=param_name,
         config='vertical',
         dt=dt,
         df_minus=df_dmpc['minus'],
@@ -126,7 +127,7 @@ if __name__ == "__main__":
 
     show_sensitivity(
         controller_name='sac',
-        param_name='comp_max_isen_eff',
+        param_name=param_name,
         config='vertical',
         dt=dt,
         hist_minus=hist_sac['minus'],
