@@ -63,7 +63,8 @@ class BatteryThermalSystem:
             'Q_gen': diag_vec[4],
             'Q_cool': diag_vec[5],
             'm_clnt_dot': diag_vec[6],
-            'P_comp_elec': diag_vec[7]
+            'P_comp_elec': diag_vec[7],
+            'P_pump_elec':  diag_vec[8],
         }
         
         return self.state, self.diagnostics

@@ -54,7 +54,7 @@ def battery_dynamics_ode_ca(state, controls, disturbances, params):
     P_batt_total = P_driv + P_cooling + P_aux
 
     V_oc_cell = get_ocv(soc, T_batt, mode='discharge') 
-    R_batt_cell = get_rbatt(soc, T_batt)
+    R_batt_cell = get_rbatt(soc, T_batt, params)
 
     V_oc_pack = V_oc_cell * params.N_series
     R_batt_pack = (R_batt_cell * params.N_series) / params.N_parallel

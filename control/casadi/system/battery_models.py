@@ -96,14 +96,14 @@ def get_ocv(soc, temp, mode='discharge'):
     return _to_numeric_if_needed(ocv, temp)
 
 
-def get_rbatt(soc, temp):
+def get_rbatt(soc, temp, params):
     SCALE_FACTOR = 3.0
     
     r0 = r0_interpolant(temp)
     r1 = r1_interpolant(temp)
     
-    r_total_cell = (r0 + r1) * 1.0 # soc_multiplier = 1
-    r_total_pack = r_total_cell / SCALE_FACTOR
+    r_total_cell = (r0 + r1) 
+    r_total_pack = r_total_cell / SCALE_FACTOR * params.r_int_scale # Sensibility
     
     return _to_numeric_if_needed(r_total_pack, temp)
 

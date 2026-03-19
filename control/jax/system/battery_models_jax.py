@@ -123,15 +123,15 @@ def get_ocv_jax(soc, temp, p_batt_total):
     return ocv
 
 @jax.jit
-def get_rbatt_jax(soc, temp):
+def get_rbatt_jax(soc, temp, params):
     """
     Calculates internal resistance (R_pack).
     """
     SCALE_FACTOR = 3.0
     
     # Interpolate R0 and R1
-    r0_cell = jnp.interp(temp, RES_TEMPS, R0_TABLE)
-    r1_cell = jnp.interp(temp, RES_TEMPS, R1_TABLE)
+    r0_cell = jnp.interp(temp, RES_TEMPS, R0_TABLE) * params.r_int_scale
+    r1_cell = jnp.interp(temp, RES_TEMPS, R1_TABLE) * params.r_int_scale
     
     r_base_cell = r0_cell + r1_cell    
     r_total_cell = r_base_cell 

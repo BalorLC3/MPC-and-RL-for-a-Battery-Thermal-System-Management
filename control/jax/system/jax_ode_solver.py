@@ -56,7 +56,7 @@ def battery_dynamics_ode(state, controls, disturbances, params):
 
     # JAX Models
     V_oc_cell = get_ocv_jax(soc, T_batt, P_batt_total)
-    R_batt_cell = get_rbatt_jax(soc, T_batt)
+    R_batt_cell = get_rbatt_jax(soc, T_batt, params)
 
     # Scale to Pack
     V_oc_pack = V_oc_cell * params.N_series

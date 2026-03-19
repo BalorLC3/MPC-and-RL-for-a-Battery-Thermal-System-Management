@@ -1,3 +1,5 @@
+import numpy as np
+
 class SystemParameters:
     def __init__(self):
         # --- Thermodynamics ---
@@ -37,3 +39,6 @@ class SystemParameters:
         # Engine 
         self.motor_max_eff          = 0.92
         self.motor_nominal_speed_rpm = 5000.0
+
+        # Resistance
+        self.r_int_scale = 1.0 # For sensibility
