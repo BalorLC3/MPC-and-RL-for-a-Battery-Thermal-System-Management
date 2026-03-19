@@ -1,32 +1,7 @@
 import casadi as ca
 import numpy as np
 from control.casadi.system.casadi_ode_solver import rk4_step_ca
-
-class SystemParameters:
-    def __init__(self):
-        '''Initialize system parameters'''
-        # --- Thermodynamics ---
-        self.rho_rfg = 27.8
-        self.rho_clnt = 1069.5
-        self.C_rfg = 1117.0
-        self.C_clnt = 3330.0
-        self.V_comp = 33e-6
-        self.V_pump = 33e-6
-        self.h_eva = 1000.0
-        self.A_eva = 0.3
-        self.h_batt = 300.0
-        self.A_batt = 1.0
-        self.PR = 5.0
-        self.h_cout_kJ = 284.3
-        self.h_evaout_kJ = 250.9
-        
-        # --- Battery pack parameters ---
-        self.m_batt = 40.0       
-        self.C_batt = 1350.0     
-        self.N_series = 96.0       
-        self.N_parallel = 1.0     
-        
-        self.m_clnt_total = 2.0 * self.rho_clnt / 1000
+from control.baselines.config import SystemParameters
 
 class BatteryThermalSystem:
     def __init__(self, initial_state, params):

@@ -5,7 +5,8 @@ Run from repository root:
 """
 
 import numpy as np
-from control.casadi.system.sys_dynamics_casadi import BatteryThermalSystem, SystemParameters
+from control.baselines.config import SystemParameters
+from control.casadi.system.sys_dynamics_casadi import BatteryThermalSystem
 from control.casadi.utils.setup import SimConfiguration, run_simulation
 from control.casadi.controllers.thermostat import Thermostat
 from control.casadi.controllers.mpc import DMPC, SMPC

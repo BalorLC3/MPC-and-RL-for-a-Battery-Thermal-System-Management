@@ -3,7 +3,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 # Own modules
-from control.jax.system.sys_dynamics_jax import SystemParameters
+from control.baselines.config import SystemParameters
 from control.jax.controllers.dynamic_programming import run_dp_offline, make_dp_controller_fn
 from control.jax.controllers.thermostat import thermostat_logic_jax
 from control.jax.reinforcement_learning.sac import SBXActor
