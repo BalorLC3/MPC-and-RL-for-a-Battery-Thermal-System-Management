@@ -9,6 +9,17 @@ A central focus of this work is **Stochastic Model Predictive Control (SMPC)**, 
 In contrast, **reinforcement learning (RL)** methods learn control policies directly from interaction with the environment, without requiring an explicit disturbance model, trading analytical guarantees for flexibility and scalability.
 
 ---
+## Schematic Diagram
+
+<div style="text-align: center;">
+  <img src="docs/Diagram-of-cooling-system.png" width="500">
+</div>   
+
+*Image adapted from Park, Ahn (2017).*
+
+Battery cooling systems are classified by medium (air/liquid) and operation (passive/active). While air cooling is simple, EVs typically use liquid-based active systems for superior thermal control. These systems circulate coolant through the battery and reject heat via a refrigeration cycle, enabling precise temperature regulation at the cost of additional complexity and energy consumption.
+
+---
 
 ## Key Features
 
@@ -141,7 +152,9 @@ python -m control.baselines.sensitivity_analysis
 ```
 For example, varying the internal resistance of the battery using DMPC and $\sigma=0.2$
 
-<img src="results/dmpc_sensitivity_rint.png" width="200" />
+<div style="text-align: center;">
+  <img src="results/dmpc_sensitivity_rint.png" width="200" alt="Image description">
+</div>   
 
 where the shaded area is the variance.
 ---
