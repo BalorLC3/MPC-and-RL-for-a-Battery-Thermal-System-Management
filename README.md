@@ -144,6 +144,7 @@ For example, varying the internal resistance of the battery using DMPC and $\sig
 <img src="results/dmpc_sensitivity_rint.png" width="200" />
 
 where the shaded area is the variance.
+
 ---
 
 ## Scope and Design Notes
