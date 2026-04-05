@@ -26,7 +26,7 @@ if __name__ == "__main__":
         T_amb = 40.0,
         dt = dt
     )
-    plot_config = 'horizontal'
+    plot_config = 'vertical'
 
     params = SystemParameters()
     init_state = {'T_batt': 30.0, 'T_clnt': 30.0, 'soc': 0.8}

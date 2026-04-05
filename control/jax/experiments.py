@@ -128,7 +128,7 @@ if __name__ == "__main__":
         ctrl_hist=controls, 
         diag_hist=diagnostics, 
         controller_name=controller_name, 
-        config='horizontal'
+        config='vertical'
     )
 
 
