@@ -157,6 +157,7 @@ For example, varying the internal resistance of the battery using DMPC and $\sig
 </div>   
 
 where the shaded area is the variance.
+
 ---
 
 ## Scope and Design Notes
