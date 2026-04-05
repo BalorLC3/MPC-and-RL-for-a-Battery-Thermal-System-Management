@@ -124,13 +124,20 @@ results/sac_h10/finetune/
 
 ### Controller Comparison Experiments
 
-Compare thermostat, DP, and trained RL policies:
+Compare thermostat, DP, and trained RL policies. This script evaluates the controllers on the same driving cycle and reports both **performance and execution time**.
 
+Run with Dynamic Programming:
 ```bash
-python -m control.jax.experiments
+python -m control.jax.experiments --controller dp
 ```
-
-This script evaluates all controllers on the same driving cycle and reports both **performance and execution time**.
+Run with Soft Actor-Critic:
+```bash
+python -m control.jax.experiments --controller sac_h10 --horizon 10
+```
+Run with Thermostat:
+```bash
+python -m control.jax.experiments --controller thermostat
+```
 
 ---
 

@@ -2,6 +2,9 @@
 import numpy as np
 import jax
 import jax.numpy as jnp
+import argparse  # Added for CLI parsing
+import pickle
+
 # Own modules
 from control.baselines.config import SystemParameters
 from control.jax.controllers.dynamic_programming import run_dp_offline, make_dp_controller_fn
@@ -11,7 +14,7 @@ from control.jax.utils.setup import run_simulation, load_driving_cycle
 from control.jax.utils.performance import time_total_simulation
 from control.utils.plot_helper import show_results 
 from control.jax.env.env_batt import ObservationConfig
-import pickle
+
 
 def make_controller(controller_name, dist, params, horizon):
     """
@@ -30,10 +33,11 @@ def make_controller(controller_name, dist, params, horizon):
 
         actor = SBXActor(n_actions=2)
         obs_config = ObservationConfig(horizon=horizon)
+        
         def get_obs(state, disturbance, preview): 
             raw = jnp.concatenate([state, disturbance, preview]) 
             mean = jnp.concatenate([ 
-                obs_config.obs_mean,                     
+                obs_config.obs_mean,                    
                 jnp.full((obs_config.horizon,), 10000.0) 
             ]) 
             scale = jnp.concatenate([ 
@@ -63,6 +67,7 @@ def make_controller(controller_name, dist, params, horizon):
     
     raise ValueError(f"Unknown controller: {controller_name}")
 
+
 def run_and_time(controller_fn, init_state, dist, params, dt):
     total_time = time_total_simulation(
         init_state,
@@ -76,19 +81,30 @@ def run_and_time(controller_fn, init_state, dist, params, dt):
 
     return history, total_time
 
+
 if __name__ == "__main__":
+    # ---------------------------------------------------------------
+    # CLI Argument Parsing
+    # ---------------------------------------------------------------
+    parser = argparse.ArgumentParser(description="Run control experiments.")
+    parser.add_argument("--controller", type=str, default="dp", 
+                        help="Name of the controller to use (e.g., dp, thermostat, sac_h0).")
+    parser.add_argument("--horizon", type=int, default=10, 
+                        help="Preview horizon length for SAC controller.")
+    
+    args = parser.parse_args()
 
     # ---------------------------------------------------------------
     # Setup
     # ---------------------------------------------------------------
-    controller_name = "sac_h10"; horizon = 10
-    dt = 1.0
+    controller_name = args.controller
+    horizon = args.horizon
 
     dist = load_driving_cycle()
     params = SystemParameters()
 
     init_state = jnp.array([30.0, 30.0, 0.8])
-
+    dt = 1.0
     # ---------------------------------------------------------------
     # Controller
     # ---------------------------------------------------------------
@@ -107,7 +123,7 @@ if __name__ == "__main__":
         init_state,
         dist,
         params,
-        dt,
+        dt
     )
 
     print(
@@ -130,7 +146,3 @@ if __name__ == "__main__":
         controller_name=controller_name, 
         config='vertical'
     )
-
-
-
-
