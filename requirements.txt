@@ -1,8 +1,8 @@
 # All was ran in python 3.12.2
-casadi==3.7.2 
-jax[cpu]==0.6.2 # Using JAX with GPU needs linux
-jaxlib==0.6.2
-matplotlib==3.10.3
-numpy==2.0.0
+casadi>=3.7.2 
+jax[cpu]>=0.6.2 # Using JAX with GPU needs linux
+jaxlib>=0.6.2
+matplotlib>=3.10.3
+numpy>=2.0.0
 pandas>=2.2.0
 scipy>=1.13.0
