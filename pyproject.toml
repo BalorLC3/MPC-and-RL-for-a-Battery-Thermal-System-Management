@@ -1,0 +1,15 @@
+[project]
+name = "mpc-and-rl-for-a-battery-thermal-system-management"
+version = "0.1.0"
+description = "The application of Model Predictive Control (MPC) and Reinforcement Learning (RL) to Battery Thermal Management System of an Electrical Vehicle (EV) with a Ion-Lithuim battery"
+readme = "README.md"
+requires-python = ">=3.12.2"
+dependencies = [
+    "casadi>=3.7.2",
+    "jax[cpu]>=0.6.2",
+    "jaxlib>=0.6.2",
+    "matplotlib>=3.10.3",
+    "numpy>=2.0.0",
+    "pandas>=2.2.0",
+    "scipy>=1.13.0",
+]
