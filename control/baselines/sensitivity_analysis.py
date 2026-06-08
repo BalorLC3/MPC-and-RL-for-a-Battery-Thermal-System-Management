@@ -30,14 +30,16 @@ plt.rcParams.update(PLOT_CONFIG)
 # Helpers
 # ---------------------------------------------------------------
 
-def make_varied_params(variance: float) -> SystemParameters:
+def make_varied_params(variance: float, param: str) -> SystemParameters:
     """
+    param 0: h_batt
+    param 1: comp_max_isen_eff
+    param 2: r_int
+
     Returns a fresh SystemParameters scaled by (1 + variance).
     """
     params = SystemParameters()
-    params.r_int_scale       *= (1 + variance)
-    params.h_batt            *= (1 + variance)
-    params.comp_max_isen_eff *= (1 + variance)
+    params[param] *= (1 + variance)
     return params
 
 
@@ -85,7 +87,6 @@ if __name__ == "__main__":
     T_des     = 33.0
     horizon   = 10
     sac_name  = "sac_h0"
-    param_name = "three"
 
     init_state_ca  = {'T_batt': 30.0, 'T_clnt': 30.0, 'soc': 0.8}
     init_state_jax = jnp.array([30.0, 30.0, 0.8])
@@ -94,44 +95,48 @@ if __name__ == "__main__":
     velocity_data = np.load('data/processed/driving_velocity.npy', mmap_mode='r')
     dist          = load_driving_cycle()
 
-    config = SimConfiguration(
-        driving_data=driving_data,
-        velocity_data=velocity_data,
-        T_amb=40.0,
-        dt=dt,
-    )
 
+    params     = ["h_batt", "comp_max_isen_eff", "r_int_scale"]
     variances  = {'minus': -0.2, 'base': 0.0, 'plus': 0.2}
     df_dmpc    = {}
     hist_sac   = {}
 
-    for key, variance in variances.items():
-        print(f"\n |  >  variance = {variance:+.0%}  <  |")
-        params = make_varied_params(variance)
+    for param in params:
+        # reinitiialize configuration 
+        config = SimConfiguration(
+            driving_data=driving_data,
+            velocity_data=velocity_data,
+            T_amb=40.0,
+            dt=dt,
+        )
 
-        print("  DMPC...")
-        df_dmpc[key]  = run_dmpc(params, config, init_state_ca, dt, T_des, horizon)
+        for key, variance in variances.items():
+            print(f"\n |  >  variance = {variance:+.0%}  <  |")
+            varied_params = make_varied_params(variance, param=param)
 
-        print(f"  SAC ({sac_name})...")
-        hist_sac[key] = run_sac(params, dist, init_state_jax, dt, sac_name, horizon=0)
+            print("  DMPC...")
+            df_dmpc[key]  = run_dmpc(varied_params, config, init_state_ca, dt, T_des, horizon)
 
-    # plot
-    show_sensitivity(
-        controller_name='dmpc',
-        param_name=param_name,
-        config='horizontal',
-        dt=dt,
-        df_minus=df_dmpc['minus'],
-        df_base=df_dmpc['base'],
-        df_plus=df_dmpc['plus'],
-    )
+            print(f"  SAC ({sac_name})...")
+            hist_sac[key] = run_sac(varied_params, dist, init_state_jax, dt, sac_name, horizon=0)
 
-    show_sensitivity(
-        controller_name='sac',
-        param_name=param_name,
-        config='horizontal',
-        dt=dt,
-        hist_minus=hist_sac['minus'],
-        hist_base=hist_sac['base'],
-        hist_plus=hist_sac['plus'],
-    )
+        # plot
+        show_sensitivity(
+            controller_name='dmpc',
+            param_name=param,
+            config='horizontal',
+            dt=dt,
+            df_minus=df_dmpc['minus'],
+            df_base=df_dmpc['base'],
+            df_plus=df_dmpc['plus'],
+        )
+
+        show_sensitivity(
+            controller_name='sac',
+            param_name=param,
+            config='horizontal',
+            dt=dt,
+            hist_minus=hist_sac['minus'],
+            hist_base=hist_sac['base'],
+            hist_plus=hist_sac['plus'],
+        )
