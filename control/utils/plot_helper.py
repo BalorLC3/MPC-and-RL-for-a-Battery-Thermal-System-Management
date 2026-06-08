@@ -175,9 +175,9 @@ def plot_sensitivity(
     axs[3].legend(loc='upper left', frameon=True, fontsize=7)
     axs[3].set_xlim(0, time[-1]); axs[3].set_ylim(28, 35)
 
-    lo  = np.cumsum(df_minus['P_cooling'].values) * dt / 1000
-    mid = np.cumsum(df_base['P_cooling'].values)  * dt / 1000
-    hi  = np.cumsum(df_plus['P_cooling'].values)  * dt / 1000
+    lo  = np.cumsum(df_minus['P_cooling'].to_numpy()) * dt / 1000
+    mid = np.cumsum(df_base['P_cooling'].to_numpy())  * dt / 1000
+    hi  = np.cumsum(df_plus['P_cooling'].to_numpy())  * dt / 1000
     axs[4].fill_between(time, lo, hi, color='seagreen', alpha=ALPHA, label='±20%')
     axs[4].plot(time, lo,  color='seagreen', lw=0.8, linestyle='--', alpha=0.6)
     axs[4].plot(time, hi,  color='seagreen', lw=0.8, linestyle='--', alpha=0.6)
@@ -191,16 +191,12 @@ def plot_sensitivity(
     plt.show()
 
 
-# ---------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------
-
 def show_results(
-    states_hist: np.ndarray | jnp.ndarray = None,
-    ctrl_hist:   np.ndarray | jnp.ndarray = None,
-    diag_hist:   np.ndarray | jnp.ndarray = None,
+    states_hist: np.ndarray | None = None,
+    ctrl_hist:   np.ndarray | None = None,
+    diag_hist:   np.ndarray | None = None,
     controller_name: str = 'any',
-    df: pd.DataFrame = None,
+    df: pd.DataFrame | None = None,
     config: str = 'vertical',
 ):
     if df is None:
@@ -219,13 +215,13 @@ def show_sensitivity(
     controller_name: str,
     param_name: str,
     config: str,
+    hist_minus: dict,
+    hist_base:  dict,
+    hist_plus:  dict,
     dt: float = 1.0,
-    df_minus:   pd.DataFrame = None,
-    df_base:    pd.DataFrame = None,
-    df_plus:    pd.DataFrame = None,
-    hist_minus: dict = None,
-    hist_base:  dict = None,
-    hist_plus:  dict = None,
+    df_minus:   pd.DataFrame | None = None,
+    df_base:    pd.DataFrame | None = None,
+    df_plus:    pd.DataFrame | None = None,
 ):
     if df_minus is None: df_minus = _hist_to_df(hist_minus)
     if df_base  is None: df_base  = _hist_to_df(hist_base)
