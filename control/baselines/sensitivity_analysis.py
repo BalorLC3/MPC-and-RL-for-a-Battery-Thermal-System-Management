@@ -13,18 +13,19 @@ import matplotlib.pyplot as plt
 from control.baselines.config import SystemParameters
 from control.utils.plot_helper import show_sensitivity, PLOT_CONFIG
 
-# CasADi / MPC
+# CasADi --> MPC
 from control.casadi.system.sys_dynamics_casadi import BatteryThermalSystem
 from control.casadi.utils.setup import SimConfiguration, run_simulation as run_simulation_ca
 from control.casadi.controllers.mpc import DMPC
 
-# JAX / SAC
+# JAX --> SAC
 from control.jax.reinforcement_learning.sac import SBXActor
 from control.jax.utils.setup import run_simulation as run_simulation_jax, load_driving_cycle
 from control.jax.env.env_batt import ObservationConfig
 import jax
 
 plt.rcParams.update(PLOT_CONFIG)
+
 # ---------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------
@@ -114,11 +115,11 @@ if __name__ == "__main__":
         print(f"  SAC ({sac_name})...")
         hist_sac[key] = run_sac(params, dist, init_state_jax, dt, sac_name, horizon=0)
 
-    # --- Plot ---
+    # plot
     show_sensitivity(
         controller_name='dmpc',
         param_name=param_name,
-        config='vertical',
+        config='horizontal',
         dt=dt,
         df_minus=df_dmpc['minus'],
         df_base=df_dmpc['base'],
@@ -128,7 +129,7 @@ if __name__ == "__main__":
     show_sensitivity(
         controller_name='sac',
         param_name=param_name,
-        config='vertical',
+        config='horizontal',
         dt=dt,
         hist_minus=hist_sac['minus'],
         hist_base=hist_sac['base'],

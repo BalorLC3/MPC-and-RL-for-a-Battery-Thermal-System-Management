@@ -215,10 +215,10 @@ def show_sensitivity(
     controller_name: str,
     param_name: str,
     config: str,
-    hist_minus: dict,
-    hist_base:  dict,
-    hist_plus:  dict,
     dt: float = 1.0,
+    hist_minus: dict[str, list] = {},
+    hist_base:  dict[str, list] = {}, 
+    hist_plus:  dict[str, list] = {},
     df_minus:   pd.DataFrame | None = None,
     df_base:    pd.DataFrame | None = None,
     df_plus:    pd.DataFrame | None = None,
@@ -233,9 +233,13 @@ def show_sensitivity(
               f"Max T_batt: {df['T_batt'].max():.3f} °C")
 
     plot_sensitivity(
-        df_minus=df_minus, df_base=df_base, df_plus=df_plus,
-        param_name=param_name, name=controller_name,
-        config=config, dt=dt,
+        df_minus=df_minus, 
+        df_base=df_base, 
+        df_plus=df_plus,
+        param_name=param_name, 
+        name=controller_name,
+        config=config, 
+        dt=dt,
     )
 
 
